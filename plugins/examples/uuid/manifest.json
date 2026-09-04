@@ -1,0 +1,14 @@
+{
+    "id": "org.mvspotlight.uuid",
+    "name": "UUID Generator",
+    "version": "1.0.0",
+    "description": "Generate random UUID v4 identifiers instantly",
+    "author": "Antigravity",
+    "entry": "plugin.lua",
+    "icon": "accessories-calculator",
+    "minimumApiVersion": 1,
+    "permissions": [
+        "clipboard.write",
+        "notifications"
+    ]
+}

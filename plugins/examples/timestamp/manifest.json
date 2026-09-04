@@ -1,0 +1,14 @@
+{
+    "id": "org.mvspotlight.timestamp",
+    "name": "Timestamp Converter",
+    "version": "1.0.0",
+    "description": "Convert Unix epoch timestamps to human readable dates and vice versa",
+    "author": "Antigravity",
+    "entry": "plugin.lua",
+    "icon": "preferences-system-time",
+    "minimumApiVersion": 1,
+    "permissions": [
+        "clipboard.write",
+        "notifications"
+    ]
+}

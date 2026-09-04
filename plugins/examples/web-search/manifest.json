@@ -1,0 +1,14 @@
+{
+    "id": "org.mvspotlight.websearch",
+    "name": "Web Search",
+    "version": "1.0.0",
+    "description": "Instant web searches for Google, GitHub, DuckDuckGo, and Wikipedia",
+    "author": "Antigravity",
+    "entry": "plugin.lua",
+    "icon": "applications-internet",
+    "minimumApiVersion": 1,
+    "permissions": [
+        "application.launch",
+        "network"
+    ]
+}

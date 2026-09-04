@@ -1,0 +1,15 @@
+{
+    "id": "org.mvspotlight.docker",
+    "name": "Docker",
+    "version": "1.0.0",
+    "description": "Search and manage running and stopped Docker containers",
+    "author": "Antigravity",
+    "entry": "plugin.lua",
+    "icon": "application-x-docker-compose",
+    "minimumApiVersion": 1,
+    "permissions": [
+        "process.execute",
+        "notifications",
+        "clipboard.write"
+    ]
+}

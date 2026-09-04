@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/qml">
+        <file>Main.qml</file>
+        <file>components/SearchBar.qml</file>
+        <file>components/ResultList.qml</file>
+        <file>components/ResultItem.qml</file>
+        <file>components/ResultIcon.qml</file>
+    </qresource>
+</RCC>

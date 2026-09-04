@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=MVSpotlight
+GenericName=Command Palette & Search
+Comment=macOS Spotlight-inspired launcher for GNOME 50
+Exec=mvspotlight --toggle
+Icon=mvspotlight
+Terminal=false
+Type=Application
+Categories=Utility;DesktopUtility;Core;
+Keywords=Search;Launcher;Spotlight;MVSpotlight;Command;Palette;
+StartupNotify=false

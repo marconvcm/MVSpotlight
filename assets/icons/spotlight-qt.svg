@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3584E4"/>
+      <stop offset="100%" stop-color="#1C71D8"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <!-- Background Squircle -->
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#bgGrad)" filter="url(#shadow)"/>
+  <!-- Magnifying glass -->
+  <g fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="56" cy="56" r="26" stroke-width="8"/>
+    <line x1="75" y1="75" x2="100" y2="100" stroke-width="9"/>
+    <!-- Subtle glow arc -->
+    <path d="M 40 40 A 22 22 0 0 1 68 36" stroke="rgba(255,255,255,0.4)" stroke-width="4"/>
+  </g>
+</svg>

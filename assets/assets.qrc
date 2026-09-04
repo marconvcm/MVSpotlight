@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/assets">
+        <file>icons/mvspotlight.svg</file>
+        <file>icons/spotlight-qt.svg</file>
+    </qresource>
+</RCC>

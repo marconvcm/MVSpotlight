@@ -1,0 +1,16 @@
+{
+    "id": "org.mvspotlight.devtools",
+    "name": "Developer Tools",
+    "version": "1.0.0",
+    "description": "Essential developer shortcuts: Gradle, ADB, SDK, and Projects",
+    "author": "Antigravity",
+    "entry": "plugin.lua",
+    "icon": "utilities-terminal",
+    "minimumApiVersion": 1,
+    "permissions": [
+        "process.execute",
+        "notifications",
+        "filesystem.read",
+        "application.launch"
+    ]
+}

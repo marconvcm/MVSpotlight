@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=MVSpotlight Daemon
+Comment=Background daemon for MVSpotlight launcher
+Exec=mvspotlight --daemon
+Icon=mvspotlight
+Terminal=false
+Type=Application
+Categories=Utility;
+X-GNOME-Autostart-enabled=true
+StartupNotify=false

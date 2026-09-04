@@ -1,0 +1,17 @@
+{
+    "id": "org.mvspotlight.git",
+    "name": "Git",
+    "version": "1.0.0",
+    "description": "Git utilities: copy current branch, open repositories, and git status",
+    "author": "Antigravity",
+    "entry": "plugin.lua",
+    "icon": "vcs-branch",
+    "minimumApiVersion": 1,
+    "permissions": [
+        "process.execute",
+        "notifications",
+        "clipboard.write",
+        "filesystem.read",
+        "application.launch"
+    ]
+}
