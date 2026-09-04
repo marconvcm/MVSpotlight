@@ -1,0 +1,16 @@
+{
+    "id": "org.mvspotlight.weather",
+    "name": "Weather",
+    "version": "1.0.0",
+    "description": "Live weather forecasts and temperatures: weather tokyo, weather london, weather sao paulo",
+    "author": "Antigravity",
+    "entry": "plugin.lua",
+    "icon": "weather-few-clouds",
+    "minimumApiVersion": 1,
+    "permissions": [
+        "network",
+        "notifications",
+        "clipboard.write",
+        "application.launch"
+    ]
+}

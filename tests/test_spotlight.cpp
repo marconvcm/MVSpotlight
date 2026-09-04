@@ -22,6 +22,7 @@ private slots:
     void testLuaPermissions();
     void testLuaPluginManagerLoad();
     void testCurrencyPlugin();
+    void testWeatherPlugin();
 };
 
 void TestMVSpotlight::testCalculatorValid()
@@ -180,6 +181,32 @@ void TestMVSpotlight::testCurrencyPlugin()
     auto res5 = manager.searchAll("brl to usd");
     QVERIFY(!res5.isEmpty());
     QVERIFY(res5.first().title().contains("USD"));
+}
+
+void TestMVSpotlight::testWeatherPlugin()
+{
+    LuaPluginManager manager;
+    QVERIFY(manager.init());
+
+    // 1. "weather" keyword alone
+    auto res1 = manager.searchAll("weather");
+    QVERIFY(!res1.isEmpty());
+    QVERIFY(res1.first().title().contains("Weather"));
+
+    // 2. "weather tokyo"
+    auto res2 = manager.searchAll("weather tokyo");
+    QVERIFY(!res2.isEmpty());
+    QVERIFY(res2.first().title().contains("Tokyo"));
+
+    // 3. "clima sao paulo"
+    auto res3 = manager.searchAll("clima sao paulo");
+    QVERIFY(!res3.isEmpty());
+    QVERIFY(res3.first().title().contains("Sao paulo") || res3.first().title().contains("Weather"));
+
+    // 4. "london weather"
+    auto res4 = manager.searchAll("london weather");
+    QVERIFY(!res4.isEmpty());
+    QVERIFY(res4.first().title().contains("London") || res4.first().title().contains("Weather"));
 }
 
 QTEST_MAIN(TestMVSpotlight)
