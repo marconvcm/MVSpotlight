@@ -123,10 +123,12 @@ Window {
                     }
 
                     onDownPressed: {
+                        resultList.keyboardNavigating = true;
                         searchController.selectNext();
                     }
 
                     onUpPressed: {
+                        resultList.keyboardNavigating = true;
                         searchController.selectPrevious();
                     }
 

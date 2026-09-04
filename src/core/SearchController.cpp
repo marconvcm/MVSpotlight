@@ -65,8 +65,14 @@ void SearchController::setQuery(const QString &query)
 
 void SearchController::setSelectedIndex(int index)
 {
-    int maxIdx = std::max(0, m_model.rowCount() - 1);
-    int clamped = std::clamp(index, 0, maxIdx);
+    if (m_model.rowCount() == 0) {
+        if (m_selectedIndex != -1) {
+            m_selectedIndex = -1;
+            emit selectedIndexChanged();
+        }
+        return;
+    }
+    int clamped = std::clamp(index, 0, m_model.rowCount() - 1);
     if (m_selectedIndex != clamped) {
         m_selectedIndex = clamped;
         emit selectedIndexChanged();
@@ -170,7 +176,8 @@ void SearchController::rankAndDeduplicateResults(QList<SearchResult> &results)
 void SearchController::updateModelResults()
 {
     m_model.setResults(m_activeResults);
-    setSelectedIndex(0);
+    m_selectedIndex = m_activeResults.isEmpty() ? -1 : 0;
+    emit selectedIndexChanged();
     emit resultCountChanged();
 }
 

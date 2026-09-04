@@ -21,6 +21,7 @@ private slots:
     void testLuaEngineErrorCatching();
     void testLuaPermissions();
     void testLuaPluginManagerLoad();
+    void testCurrencyPlugin();
 };
 
 void TestMVSpotlight::testCalculatorValid()
@@ -146,6 +147,39 @@ void TestMVSpotlight::testLuaPluginManagerLoad()
     auto timeResults = manager.searchAll("timestamp");
     QVERIFY(!timeResults.isEmpty());
     QCOMPARE(timeResults.first().type(), QString("Converter"));
+}
+
+void TestMVSpotlight::testCurrencyPlugin()
+{
+    LuaPluginManager manager;
+    QVERIFY(manager.init());
+
+    // 1. "299brl to usd"
+    auto res1 = manager.searchAll("299brl to usd");
+    QVERIFY(!res1.isEmpty());
+    QVERIFY(res1.first().title().contains("USD"));
+    QVERIFY(res1.first().subtitle().contains("299"));
+    QVERIFY(res1.first().subtitle().contains("BRL"));
+
+    // 2. "299 brl in usd"
+    auto res2 = manager.searchAll("299 brl in usd");
+    QVERIFY(!res2.isEmpty());
+    QVERIFY(res2.first().title().contains("USD"));
+
+    // 3. "299brl usd"
+    auto res3 = manager.searchAll("299brl usd");
+    QVERIFY(!res3.isEmpty());
+    QVERIFY(res3.first().title().contains("USD"));
+
+    // 4. "$100 to brl"
+    auto res4 = manager.searchAll("$100 to brl");
+    QVERIFY(!res4.isEmpty());
+    QVERIFY(res4.first().title().contains("BRL"));
+
+    // 5. "brl to usd"
+    auto res5 = manager.searchAll("brl to usd");
+    QVERIFY(!res5.isEmpty());
+    QVERIFY(res5.first().title().contains("USD"));
 }
 
 QTEST_MAIN(TestMVSpotlight)

@@ -539,7 +539,7 @@ int LuaApi::lua_http_get(lua_State *L)
     QString pId = plugin ? plugin->id() : "";
 
     QNetworkRequest req((QUrl(urlStr)));
-    req.setHeader(QNetworkRequest::UserAgentHeader, "Spotlight-Qt/1.0");
+    req.setHeader(QNetworkRequest::UserAgentHeader, "MVSpotlight/1.0");
 
     QNetworkReply *reply = s_currentApi->m_netManager.get(req);
     QObject::connect(reply, &QNetworkReply::finished, [reply, mgr, cbRef, pId]() {

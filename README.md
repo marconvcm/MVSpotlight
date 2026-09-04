@@ -28,7 +28,8 @@ A high-performance, keyboard-first desktop launcher and command palette for **GN
   - Execution watchdog (~100ms soft timeout) and instruction hooks preventing UI freezes.
   - Automatic error isolation and recovery without crashing the launcher.
   - Live hot-reloading on save (`QFileSystemWatcher`) and developer commands (`:plugins`, `:reload`, `:logs`, `:debug`).
-- 📦 **6 Ready-to-Use Example Plugins**:
+- 📦 **7 Ready-to-Use Example Plugins**:
+  - **Currency Exchange**: Real-time currency conversions (`299brl to usd`, `299 brl in usd`, `$50 to eur`, `100 eur to brl`, `5000 jpy to usd`).
   - **Developer Tools**: `Kill Gradle Daemons`, `Restart ADB`, `Open Android SDK`, `Open Projects Workspace`.
   - **Docker**: Search and manage running & stopped containers, start/stop with Enter, copy container IDs with Ctrl+Enter.
   - **Git**: Copy active Git branch, view git status.

@@ -1,0 +1,15 @@
+{
+    "id": "org.mvspotlight.currency",
+    "name": "Currency Exchange",
+    "version": "1.0.0",
+    "description": "Real-time currency converter: 299brl to usd, $50 to eur, 100 eur to brl",
+    "author": "Antigravity",
+    "entry": "plugin.lua",
+    "icon": "accessories-calculator",
+    "minimumApiVersion": 1,
+    "permissions": [
+        "network",
+        "notifications",
+        "clipboard.write"
+    ]
+}

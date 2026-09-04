@@ -6,6 +6,18 @@ Item {
     width: parent.width
 
     property alias listView: view
+    property bool keyboardNavigating: false
+
+    // Mouse movement inside results area reenables mouse hover selection
+    MouseArea {
+        anchors.fill: parent
+        z: -1
+        hoverEnabled: true
+        acceptedButtons: Qt.NoButton
+        onPositionChanged: {
+            root.keyboardNavigating = false;
+        }
+    }
 
     // Divider line at top of result list
     Rectangle {
@@ -29,6 +41,9 @@ Item {
 
         model: searchController.model
         currentIndex: searchController.selectedIndex
+        highlight: null
+        highlightFollowsCurrentItem: false
+        keyNavigationEnabled: false
 
         ScrollBar.vertical: ScrollBar {
             id: scrollBar
@@ -51,6 +66,14 @@ Item {
             itemProvider: model.provider || ""
             secondaryActionLabel: model.secondaryActionLabel || ""
 
+            onItemHovered: {
+                if (!root.keyboardNavigating) {
+                    if (searchController.selectedIndex !== index) {
+                        searchController.setSelectedIndex(index);
+                    }
+                }
+            }
+
             onItemClicked: {
                 searchController.setSelectedIndex(index);
                 searchController.executeIndex(index);
@@ -62,14 +85,13 @@ Item {
             }
         }
 
-        onCurrentIndexChanged: {
-            positionViewAtIndex(currentIndex, ListView.Contain);
-        }
-
         Connections {
             target: searchController
             function onSelectedIndexChanged() {
-                view.positionViewAtIndex(searchController.selectedIndex, ListView.Contain);
+                if (searchController.selectedIndex >= 0) {
+                    view.currentIndex = searchController.selectedIndex;
+                    view.positionViewAtIndex(searchController.selectedIndex, ListView.Contain);
+                }
             }
         }
     }

@@ -14,6 +14,7 @@ Item {
     property string itemProvider: ""
     property string secondaryActionLabel: ""
 
+    signal itemHovered()
     signal itemClicked()
     signal secondaryClicked()
 
@@ -26,22 +27,9 @@ Item {
         anchors.bottomMargin: 2
         radius: 14
 
-        color: {
-            if (root.isSelected) {
-                return themeService.isDark ? "#383842" : "#E2E2E8";
-            }
-            if (mouseArea.containsMouse) {
-                return themeService.isDark ? "#28282E" : "#ECECED";
-            }
-            return "transparent";
-        }
-
+        color: root.isSelected ? (themeService.isDark ? "#383842" : "#E2E2E8") : "transparent"
         border.width: root.isSelected ? 1 : 0
         border.color: themeService.isDark ? "#484856" : "#D0D0D8"
-
-        Behavior on color {
-            ColorAnimation { duration: 100 }
-        }
 
         Row {
             anchors.fill: parent
@@ -138,6 +126,10 @@ Item {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         acceptedButtons: Qt.LeftButton | Qt.RightButton
+
+        onPositionChanged: function(mouse) {
+            root.itemHovered();
+        }
 
         onClicked: function(mouse) {
             if (mouse.button === Qt.RightButton) {
