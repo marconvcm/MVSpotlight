@@ -1,6 +1,7 @@
 #include "LuaPluginManager.h"
 #include "LuaApi.h"
 #include "../services/UsageHistory.h"
+#include "../services/ConfigService.h"
 #include <QDir>
 #include <QFile>
 #include <QJsonDocument>
@@ -133,6 +134,10 @@ bool LuaPluginManager::loadManifest(const QString &manifestPath, LuaPlugin &plug
     }
     plugin.setPermissions(LuaPermissions(perms));
 
+    if (obj.contains("settings") && obj["settings"].isArray()) {
+        plugin.setSettingsSchema(obj["settings"].toArray().toVariantList());
+    }
+
     if (plugin.minimumApiVersion() > CURRENT_API_VERSION) {
         plugin.setStatus(LuaPlugin::Status::Error);
         plugin.setErrorMessage(QString("Incompatible API version: requires %1, launcher provides %2")
@@ -167,6 +172,16 @@ bool LuaPluginManager::loadPluginFromDir(const QString &dirPath)
 
     if (!m_watcher.directories().contains(dirPath)) {
         m_watcher.addPath(dirPath);
+    }
+
+    // Check if user has disabled this plugin in settings
+    bool isEnabled = ConfigService::instance().isPluginEnabled(plugin.id());
+    if (!isEnabled) {
+        plugin.setStatus(LuaPlugin::Status::Disabled);
+        int idx = m_plugins.size();
+        m_plugins.append(plugin);
+        m_pluginIndexById.insert(plugin.id(), idx);
+        return true;
     }
 
     QString entryPath = dirPath + "/" + plugin.entry();
@@ -463,3 +478,48 @@ bool LuaPluginManager::executeProvider(const QString &pluginId, const QString &p
     }
     return false;
 }
+
+QVariantList LuaPluginManager::getPluginList() const
+{
+    QVariantList list;
+    for (const LuaPlugin &plugin : m_plugins) {
+        QVariantMap map;
+        map["id"] = plugin.id();
+        map["name"] = plugin.name();
+        map["version"] = plugin.version();
+        map["description"] = plugin.description();
+        map["author"] = plugin.author();
+        map["icon"] = plugin.icon();
+        map["directory"] = plugin.directory();
+        map["status"] = plugin.statusString();
+        map["enabled"] = (plugin.status() == LuaPlugin::Status::Enabled);
+        map["errorMessage"] = plugin.errorMessage();
+        map["permissions"] = plugin.permissions().toList();
+        map["settingsSchema"] = plugin.settingsSchema();
+        list.append(map);
+    }
+    return list;
+}
+
+bool LuaPluginManager::setPluginEnabled(const QString &pluginId, bool enabled)
+{
+    ConfigService::instance().setPluginEnabled(pluginId, enabled);
+    reloadAll();
+    return true;
+}
+
+QVariant LuaPluginManager::getPluginSetting(const QString &pluginId, const QString &key, const QVariant &defaultValue) const
+{
+    return ConfigService::instance().getPluginSetting(pluginId, key, defaultValue);
+}
+
+void LuaPluginManager::setPluginSetting(const QString &pluginId, const QString &key, const QVariant &value)
+{
+    ConfigService::instance().setPluginSetting(pluginId, key, value);
+}
+
+QVariantMap LuaPluginManager::getPluginSettings(const QString &pluginId) const
+{
+    return ConfigService::instance().getPluginSettings(pluginId);
+}
+

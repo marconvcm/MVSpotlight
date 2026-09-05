@@ -21,6 +21,7 @@ public slots:
     void Search(const QString &query);
     void ReloadPlugins();
     QStringList ListPlugins();
+    void OpenPreferences();
 
 signals:
     void Shown();
@@ -45,6 +46,7 @@ public slots:
     void Search(const QString &query);
     void ReloadPlugins();
     QStringList ListPlugins();
+    void OpenPreferences();
 
 signals:
     void Shown();

@@ -17,6 +17,8 @@
 #include "core/SearchController.h"
 #include "lua/LuaPluginManager.h"
 #include "services/ThemeService.h"
+#include "services/ConfigService.h"
+#include "services/UsageHistory.h"
 #include "services/IconImageProvider.h"
 #include "dbus/SpotlightAdaptor.h"
 
@@ -58,6 +60,9 @@ int main(int argc, char *argv[])
     QCommandLineOption daemonOpt(QStringList() << "d" << "daemon", "Start in background daemon mode (hidden)");
     parser.addOption(daemonOpt);
 
+    QCommandLineOption prefOpt(QStringList() << "p" << "preferences" << "settings", "Open MVSpotlight Preferences panel");
+    parser.addOption(prefOpt);
+
     parser.process(app);
 
     const QString serviceName = "org.mvspotlight.Launcher";
@@ -89,7 +94,9 @@ int main(int argc, char *argv[])
     if (!activeService.isEmpty()) {
         QDBusInterface iface(activeService, activePath, activeIface, bus);
         if (iface.isValid()) {
-            if (parser.isSet(toggleOpt)) {
+            if (parser.isSet(prefOpt)) {
+                iface.call("OpenPreferences");
+            } else if (parser.isSet(toggleOpt)) {
                 iface.call("Toggle");
             } else if (parser.isSet(showOpt)) {
                 iface.call("Show");
@@ -149,6 +156,9 @@ int main(int argc, char *argv[])
 
     engine.rootContext()->setContextProperty("searchController", &controller);
     engine.rootContext()->setContextProperty("themeService", &ThemeService::instance());
+    engine.rootContext()->setContextProperty("configService", &ConfigService::instance());
+    engine.rootContext()->setContextProperty("usageHistory", &UsageHistory::instance());
+    engine.rootContext()->setContextProperty("pluginManager", controller.pluginManager());
 
     auto getRootWindow = [&engine]() -> QQuickWindow* {
         if (!engine.rootObjects().isEmpty()) {
@@ -223,7 +233,9 @@ int main(int argc, char *argv[])
 
 
     // Determine initial visibility
-    if (parser.isSet(searchOpt)) {
+    if (parser.isSet(prefOpt)) {
+        controller.openPreferences();
+    } else if (parser.isSet(searchOpt)) {
         controller.setQuery(parser.value(searchOpt));
         controller.showWindow();
     } else if (parser.isSet(showOpt) || parser.isSet(toggleOpt)) {

@@ -11,5 +11,23 @@
         "network",
         "notifications",
         "clipboard.write"
+    ],
+    "settings": [
+        {
+            "key": "default_target",
+            "title": "Default Target Currency",
+            "type": "choice",
+            "choices": ["USD", "EUR", "BRL", "GBP", "JPY", "CAD", "AUD", "CHF"],
+            "choiceLabels": ["USD ($)", "EUR (€)", "BRL (R$)", "GBP (£)", "JPY (¥)", "CAD (C$)", "AUD (A$)", "CHF (Fr)"],
+            "default": "USD",
+            "description": "Fallback target currency when not specified in query (e.g. '299brl')"
+        },
+        {
+            "key": "auto_update",
+            "title": "Automatic Online Rate Refresh",
+            "type": "boolean",
+            "default": true,
+            "description": "Fetch live market quotes from AwesomeAPI & ER-API in background"
+        }
     ]
 }

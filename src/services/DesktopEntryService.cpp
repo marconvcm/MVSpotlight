@@ -297,6 +297,9 @@ QList<SearchResult> DesktopEntryService::search(const QString &query) const
         return results;
     }
 
+    static const QRegularExpression wordSplitRegex("[\\s_\\-]+");
+    QStringList qTokens = q.split(wordSplitRegex, Qt::SkipEmptyParts);
+
     for (const DesktopApp &app : m_apps) {
         double score = calculateMatchScore(app.name, q);
 
@@ -304,6 +307,13 @@ QList<SearchResult> DesktopEntryService::search(const QString &query) const
             double gScore = calculateMatchScore(app.genericName, q) * 0.85;
             if (gScore > score) score = gScore;
         }
+
+        // Check desktop ID match (e.g. org.gnome.Settings matching gnome or settings)
+        QString cleanId = app.id;
+        if (cleanId.endsWith(".desktop", Qt::CaseInsensitive)) cleanId.chop(8);
+        cleanId.replace('.', ' ').replace('-', ' ').replace('_', ' ');
+        double idScore = calculateMatchScore(cleanId, q) * 0.88;
+        if (idScore > score) score = idScore;
 
         // Check executable name match
         QFileInfo execFi(app.exec.split(' ').value(0));
@@ -314,6 +324,49 @@ QList<SearchResult> DesktopEntryService::search(const QString &query) const
         for (const QString &kw : app.keywords) {
             double kwScore = calculateMatchScore(kw, q) * 0.75;
             if (kwScore > score) score = kwScore;
+        }
+
+        // Multi-token query matching: e.g. "gnome settings", "gnome terminal"
+        if (qTokens.size() > 1) {
+            bool allMatched = true;
+            bool nameMatched = false;
+            for (const QString &tok : qTokens) {
+                bool tokMatched = false;
+                if (app.name.contains(tok, Qt::CaseInsensitive)) {
+                    tokMatched = true;
+                    nameMatched = true;
+                } else if (cleanId.contains(tok, Qt::CaseInsensitive) ||
+                           execFi.fileName().contains(tok, Qt::CaseInsensitive) ||
+                           app.genericName.contains(tok, Qt::CaseInsensitive) ||
+                           app.comment.contains(tok, Qt::CaseInsensitive)) {
+                    tokMatched = true;
+                } else {
+                    for (const QString &kw : app.keywords) {
+                        if (kw.contains(tok, Qt::CaseInsensitive)) {
+                            tokMatched = true;
+                            break;
+                        }
+                    }
+                    if (!tokMatched) {
+                        for (const QString &cat : app.categories) {
+                            if (cat.contains(tok, Qt::CaseInsensitive)) {
+                                tokMatched = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!tokMatched) {
+                    allMatched = false;
+                    break;
+                }
+            }
+
+            if (allMatched) {
+                double multiScore = 80.0;
+                if (nameMatched) multiScore += 10.0;
+                if (multiScore > score) score = multiScore;
+            }
         }
 
         if (score > 40.0) {

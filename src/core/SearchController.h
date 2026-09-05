@@ -30,7 +30,7 @@ public:
     void setQuery(const QString &query);
 
     int selectedIndex() const { return m_selectedIndex; }
-    void setSelectedIndex(int index);
+    Q_INVOKABLE void setSelectedIndex(int index);
 
     bool isSearching() const { return m_isSearching; }
     SearchResultModel* model() { return &m_model; }
@@ -51,6 +51,7 @@ public:
     Q_INVOKABLE void hideWindow();
     Q_INVOKABLE void toggleWindow();
     Q_INVOKABLE void reloadPlugins();
+    Q_INVOKABLE void openPreferences();
 
     LuaPluginManager* pluginManager() { return m_luaPluginManager; }
 
@@ -62,12 +63,14 @@ signals:
     void windowVisibleChanged();
     void resultLaunched();
     void windowDismissed();
+    void openPreferencesRequested();
 
 private slots:
     void onAsyncResultsReady(quint64 requestId, const QList<SearchResult> &results);
 
 private:
     void registerProvider(SearchProvider *provider);
+    SearchProvider* findProviderForResult(const SearchResult &result) const;
     void performSearch();
     void updateModelResults();
     void rankAndDeduplicateResults(QList<SearchResult> &results);

@@ -11,6 +11,7 @@ SettingsProvider::SettingsProvider(QObject *parent)
 
 void SettingsProvider::initPanels()
 {
+    m_panels.append({"settings:main", "GNOME Settings", "", "org.gnome.Settings", {"settings", "gnome settings", "control center", "preferences", "config", "configuration", "system settings"}});
     m_panels.append({"settings:wifi", "Wi-Fi", "wifi", "network-wireless", {"wifi", "wireless", "internet", "wlan"}});
     m_panels.append({"settings:bluetooth", "Bluetooth", "bluetooth", "bluetooth", {"bluetooth", "bt", "wireless", "devices"}});
     m_panels.append({"settings:display", "Displays", "display", "video-display", {"display", "monitor", "resolution", "screen", "refresh rate"}});
@@ -64,7 +65,7 @@ QList<SearchResult> SettingsProvider::search(const QString &query)
             SearchResult sr;
             sr.setId(panel.id);
             sr.setTitle(panel.name);
-            sr.setSubtitle("GNOME Settings");
+            sr.setSubtitle(panel.panel.isEmpty() ? "System Control Center" : "GNOME Settings");
             sr.setIcon(panel.icon);
             sr.setScore(score);
             sr.setType("Settings");
@@ -81,10 +82,18 @@ QList<SearchResult> SettingsProvider::search(const QString &query)
 bool SettingsProvider::execute(const SearchResult &result, const QString &action)
 {
     Q_UNUSED(action);
+    UsageHistory::instance().recordLaunch(result.id());
     QString panel = result.metadataValue("panel").toString();
     if (!panel.isEmpty()) {
-        UsageHistory::instance().recordLaunch(result.id());
         return ProcessService::instance().launchDetached("gnome-control-center", {panel});
     }
-    return false;
+
+    // Launch main settings window
+    if (ProcessService::instance().launchDetached("gnome-control-center", {})) {
+        return true;
+    }
+    if (ProcessService::instance().launchDetached("gtk-launch", {"org.gnome.Settings.desktop"})) {
+        return true;
+    }
+    return ProcessService::instance().launchDetached("gio", {"launch", "/usr/share/applications/org.gnome.Settings.desktop"});
 }

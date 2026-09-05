@@ -30,6 +30,7 @@ bool SearchController::init()
 
     DeveloperCommandProvider *devProvider = new DeveloperCommandProvider(this);
     connect(devProvider, &DeveloperCommandProvider::reloadPluginsRequested, this, &SearchController::reloadPlugins);
+    connect(devProvider, &DeveloperCommandProvider::openPreferencesRequested, this, &SearchController::openPreferences);
     registerProvider(devProvider);
 
     registerProvider(new FileProvider(this));
@@ -195,20 +196,74 @@ void SearchController::selectPrevious()
     }
 }
 
+SearchProvider* SearchController::findProviderForResult(const SearchResult &result) const
+{
+    const QString prov = result.provider();
+    const QString id = result.id();
+
+    // 1. Direct match on provider id or name
+    for (SearchProvider *provider : m_providers) {
+        if (provider->id().compare(prov, Qt::CaseInsensitive) == 0 ||
+            provider->name().compare(prov, Qt::CaseInsensitive) == 0) {
+            return provider;
+        }
+    }
+
+    // 2. Prefix mapping based on result ID
+    if (id.startsWith("settings:")) {
+        for (SearchProvider *p : m_providers) {
+            if (p->id() == "settings") return p;
+        }
+    } else if (id.startsWith("app:")) {
+        for (SearchProvider *p : m_providers) {
+            if (p->id() == "apps") return p;
+        }
+    } else if (id.startsWith("action:")) {
+        for (SearchProvider *p : m_providers) {
+            if (p->id() == "actions") return p;
+        }
+    } else if (id.startsWith("dev:")) {
+        for (SearchProvider *p : m_providers) {
+            if (p->id() == "developer") return p;
+        }
+    } else if (id.startsWith("file:")) {
+        for (SearchProvider *p : m_providers) {
+            if (p->id() == "files") return p;
+        }
+    } else if (id.startsWith("calc:")) {
+        for (SearchProvider *p : m_providers) {
+            if (p->id() == "calc") return p;
+        }
+    }
+
+    // 3. Lua plugin metadata check
+    if (!result.metadataValue("pluginId").toString().isEmpty()) {
+        for (SearchProvider *p : m_providers) {
+            if (p->id() == "lua_plugins") return p;
+        }
+    }
+
+    return nullptr;
+}
+
 void SearchController::executeIndex(int index)
 {
     const SearchResult *res = m_model.resultAt(index);
     if (!res) return;
 
-    QString providerName = res->provider();
-    for (SearchProvider *provider : m_providers) {
-        if (provider->name() == providerName || provider->id() == res->provider()
-            || provider->id() == "lua_plugins") {
-            if (provider->execute(*res)) {
-                emit resultLaunched();
-                hideWindow();
-                return;
-            }
+    SearchProvider *provider = findProviderForResult(*res);
+    if (provider && provider->execute(*res)) {
+        emit resultLaunched();
+        hideWindow();
+        return;
+    }
+
+    // Fallback: try remaining providers
+    for (SearchProvider *p : m_providers) {
+        if (p != provider && p->execute(*res)) {
+            emit resultLaunched();
+            hideWindow();
+            return;
         }
     }
 }
@@ -219,8 +274,17 @@ void SearchController::executeSecondaryIndex(int index)
     if (!res) return;
 
     QString secAction = res->secondaryAction();
-    for (SearchProvider *provider : m_providers) {
-        if (provider->execute(*res, secAction.isEmpty() ? "secondary" : secAction)) {
+    QString action = secAction.isEmpty() ? QStringLiteral("secondary") : secAction;
+
+    SearchProvider *provider = findProviderForResult(*res);
+    if (provider && provider->execute(*res, action)) {
+        emit resultLaunched();
+        hideWindow();
+        return;
+    }
+
+    for (SearchProvider *p : m_providers) {
+        if (p != provider && p->execute(*res, action)) {
             emit resultLaunched();
             hideWindow();
             return;
@@ -259,4 +323,9 @@ void SearchController::reloadPlugins()
         m_luaPluginManager->reloadAll();
         performSearch();
     }
+}
+
+void SearchController::openPreferences()
+{
+    emit openPreferencesRequested();
 }

@@ -10,7 +10,7 @@ public:
     explicit ActionProvider(QObject *parent = nullptr);
 
     QString id() const override { return "actions"; }
-    QString name() const override { return "Quick Actions"; }
+    QString name() const override { return "System Actions"; }
 
     QList<SearchResult> search(const QString &query) override;
     bool execute(const SearchResult &result, const QString &action = QString()) override;

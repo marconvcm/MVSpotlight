@@ -1,9 +1,18 @@
 <RCC>
     <qresource prefix="/qml">
         <file>Main.qml</file>
+        <file>PreferencesWindow.qml</file>
         <file>components/SearchBar.qml</file>
         <file>components/ResultList.qml</file>
         <file>components/ResultItem.qml</file>
         <file>components/ResultIcon.qml</file>
+        <file>components/AdwButton.qml</file>
+        <file>components/AdwSwitch.qml</file>
+        <file>components/AdwSlider.qml</file>
+        <file>components/AdwTextField.qml</file>
+        <file>components/AdwComboBox.qml</file>
+        <file>components/AdwActionRow.qml</file>
+        <file>components/AdwPreferencesGroup.qml</file>
+        <file>components/AdwSegmentedControl.qml</file>
     </qresource>
 </RCC>

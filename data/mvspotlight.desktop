@@ -9,3 +9,11 @@ Type=Application
 Categories=Utility;DesktopUtility;Core;
 Keywords=Search;Launcher;Spotlight;MVSpotlight;Command;Palette;
 StartupNotify=false
+Actions=Preferences;
+
+[Desktop Action Preferences]
+Name=MVSpotlight Preferences
+Comment=Configure MVSpotlight appearance, themes, and plugins
+Exec=mvspotlight --preferences
+Icon=preferences-system
+

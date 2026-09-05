@@ -106,6 +106,10 @@ local function extract_city(query)
 
     -- Exact keywords
     if q == "weather" or q == "clima" or q == "tempo" or q == "forecast" then
+        local def = launcher.get_config("default_city", "")
+        if def and #def > 0 then
+            return def
+        end
         return ""
     end
 
@@ -153,6 +157,9 @@ launcher.register_provider({
         end
 
         local display_city = #city > 0 and (city:gsub("^%l", string.upper)) or "Your Location"
+        local unit = tostring(launcher.get_config("temperature_unit", "c")):lower()
+        local show_forecast = launcher.get_config("show_forecast", true)
+        if show_forecast == nil then show_forecast = true end
 
         if cached and cached.data then
             local w = cached.data
@@ -162,12 +169,20 @@ launcher.register_provider({
                 location = location .. ", " .. w.country
             end
 
-            local title = string.format("%s %s: %s°C (%s°F) • %s", emoji, location, w.temp_c, w.temp_f, w.desc)
-            local subtitle = string.format("Feels like %s°C · Humidity %s%% · Wind %s km/h %s · Enter to open wttr.in",
-                w.feels_c or w.temp_c, w.humidity or "N/A", w.wind_kmh or "0", w.wind_dir or "")
+            local temp_display = (unit == "f")
+                and string.format("%s°F (%s°C)", w.temp_f, w.temp_c)
+                or string.format("%s°C (%s°F)", w.temp_c, w.temp_f)
 
-            local copy_text = string.format("%s: %s°C (%s°F), %s, Humidity %s%%, Wind %s km/h",
-                location, w.temp_c, w.temp_f, w.desc, w.humidity or "", w.wind_kmh or "")
+            local feels_display = (unit == "f")
+                and string.format("%s°F", w.feels_f or w.temp_f)
+                or string.format("%s°C", w.feels_c or w.temp_c)
+
+            local title = string.format("%s %s: %s • %s", emoji, location, temp_display, w.desc)
+            local subtitle = string.format("Feels like %s · Humidity %s%% · Wind %s km/h %s · Enter to open wttr.in",
+                feels_display, w.humidity or "N/A", w.wind_kmh or "0", w.wind_dir or "")
+
+            local copy_text = string.format("%s: %s, %s, Humidity %s%%, Wind %s km/h",
+                location, temp_display, w.desc, w.humidity or "", w.wind_kmh or "")
 
             local web_target = #city > 0 and url_encode(city) or url_encode(w.area or "")
             local web_url = "https://wttr.in/" .. web_target
@@ -187,10 +202,12 @@ launcher.register_provider({
                 }
             }
 
-            -- Forecast card if max/min temps are available
-            if w.max_c and w.min_c then
-                local f_title = string.format("📅 Today's Forecast: High %s°C / Low %s°C (%s°F / %s°F)",
-                    w.max_c, w.min_c, w.max_f or "", w.min_f or "")
+            -- Forecast card if max/min temps are available and enabled
+            if show_forecast and w.max_c and w.min_c then
+                local f_temp = (unit == "f")
+                    and string.format("High %s°F / Low %s°F (%s°C / %s°C)", w.max_f or "", w.min_f or "", w.max_c, w.min_c)
+                    or string.format("High %s°C / Low %s°C (%s°F / %s°F)", w.max_c, w.min_c, w.max_f or "", w.min_f or "")
+                local f_title = string.format("📅 Today's Forecast: %s", f_temp)
                 local f_subtitle = string.format("%s · Press Enter to view 3-day forecast on wttr.in", location)
 
                 table.insert(results, {

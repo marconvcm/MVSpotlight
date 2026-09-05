@@ -1,0 +1,42 @@
+{
+    "id": "org.mvspotlight.github",
+    "name": "GitHub",
+    "version": "1.0.0",
+    "description": "GitHub integration: browse repositories, list pull requests, issues, reviews, and quick navigation",
+    "author": "Antigravity",
+    "entry": "plugin.lua",
+    "icon": "vcs-merge-request",
+    "minimumApiVersion": 1,
+    "permissions": [
+        "process.execute",
+        "application.launch",
+        "network",
+        "notifications",
+        "clipboard.write"
+    ],
+    "settings": [
+        {
+            "key": "user_login",
+            "title": "GitHub Username / Handle",
+            "type": "string",
+            "default": "",
+            "description": "Your GitHub username (e.g. 'torvalds'). If empty, auto-detected via 'gh api user'."
+        },
+        {
+            "key": "default_repo_action",
+            "title": "Default Repository Enter Action",
+            "type": "choice",
+            "choices": ["browser", "clone", "code", "terminal"],
+            "choiceLabels": ["Open in Web Browser", "Copy Clone URL", "Open in VS Code", "Open in Terminal"],
+            "default": "browser",
+            "description": "Action executed when pressing Enter on a repository search result"
+        },
+        {
+            "key": "cache_duration",
+            "title": "Cache Refresh Interval (seconds)",
+            "type": "number",
+            "default": "600",
+            "description": "Time in seconds between automatic background refreshes of repositories and pull requests"
+        }
+    ]
+}

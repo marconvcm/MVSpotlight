@@ -1,0 +1,13 @@
+[Unit]
+Description=MVSpotlight Daemon (macOS Spotlight-inspired launcher for GNOME 50)
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/mvspotlight --daemon
+Restart=on-failure
+RestartSec=2s
+Environment=QT_QPA_PLATFORM=wayland
+
+[Install]
+WantedBy=default.target

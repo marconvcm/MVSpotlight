@@ -18,7 +18,7 @@ public:
     explicit SettingsProvider(QObject *parent = nullptr);
 
     QString id() const override { return "settings"; }
-    QString name() const override { return "Settings"; }
+    QString name() const override { return "GNOME Settings"; }
 
     QList<SearchResult> search(const QString &query) override;
     bool execute(const SearchResult &result, const QString &action = QString()) override;

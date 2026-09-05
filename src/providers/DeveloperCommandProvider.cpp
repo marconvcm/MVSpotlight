@@ -20,6 +20,21 @@ QList<SearchResult> DeveloperCommandProvider::search(const QString &query)
     QList<SearchResult> results;
     QString q = query.trimmed().toLower();
 
+    if (q == ":settings" || q == ":config" || q == "settings" || q == "preferences" ||
+        q == "spotlight settings" || q == "spotlight preferences" || q == "configure spotlight" ||
+        q == ":preferences" || q == "appearance" || q == "customize") {
+        SearchResult sr;
+        sr.setId("dev:preferences");
+        sr.setTitle("MVSpotlight Preferences");
+        sr.setSubtitle("Customize themes, accents, card dimensions, and plugins");
+        sr.setIcon("preferences-system");
+        sr.setScore(99.0);
+        sr.setType("Preferences");
+        sr.setProvider("Developer Tools");
+        sr.setAction("open_preferences");
+        results.append(sr);
+    }
+
     if (q == ":plugins" || q == "plugins" || q == ":plugin") {
         SearchResult sr;
         sr.setId("dev:plugins");
@@ -29,7 +44,7 @@ QList<SearchResult> DeveloperCommandProvider::search(const QString &query)
         sr.setScore(100.0);
         sr.setType("Developer");
         sr.setProvider("Developer Tools");
-        sr.setAction("show_plugins");
+        sr.setAction("open_preferences");
         results.append(sr);
     }
 
@@ -93,6 +108,11 @@ QList<SearchResult> DeveloperCommandProvider::search(const QString &query)
 bool DeveloperCommandProvider::execute(const SearchResult &result, const QString &action)
 {
     QString act = result.action();
+
+    if (act == "open_preferences") {
+        emit openPreferencesRequested();
+        return true;
+    }
 
     if (act == "reload_plugins") {
         emit reloadPluginsRequested();

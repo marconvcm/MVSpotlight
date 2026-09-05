@@ -41,6 +41,13 @@ public:
     bool executeCommand(const QString &pluginId, const QString &commandId);
     bool executeProvider(const QString &pluginId, const QString &providerId, const SearchResult &result);
 
+    // QML-accessible Plugin Management & Configuration
+    Q_INVOKABLE QVariantList getPluginList() const;
+    Q_INVOKABLE bool setPluginEnabled(const QString &pluginId, bool enabled);
+    Q_INVOKABLE QVariant getPluginSetting(const QString &pluginId, const QString &key, const QVariant &defaultValue = QVariant()) const;
+    Q_INVOKABLE void setPluginSetting(const QString &pluginId, const QString &key, const QVariant &value);
+    Q_INVOKABLE QVariantMap getPluginSettings(const QString &pluginId) const;
+
 signals:
     void pluginsReloaded();
     void pluginError(const QString &pluginId, const QString &error);

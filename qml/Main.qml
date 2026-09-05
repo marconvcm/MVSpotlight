@@ -6,7 +6,7 @@ import "components"
 Window {
     id: window
     title: "MVSpotlight"
-    width: 720
+    width: cardContainer.width + 40
     height: cardContainer.height + 40
     visible: searchController.windowVisible
     color: "transparent"
@@ -17,7 +17,7 @@ Window {
     function reposition() {
         if (Screen.width > 0 && Screen.height > 0) {
             window.x = (Screen.width - window.width) / 2;
-            window.y = Math.round(Screen.height * 0.26);
+            window.y = Math.round(Screen.height * configService.windowPositionRatio);
         }
     }
 
@@ -25,8 +25,22 @@ Window {
         reposition();
     }
 
+    PreferencesWindow {
+        id: preferencesWindow
+    }
+
+    Shortcut {
+        sequence: "Ctrl+,"
+        onActivated: {
+            searchController.openPreferences();
+        }
+    }
+
     Connections {
         target: searchController
+        function onOpenPreferencesRequested() {
+            preferencesWindow.openPreferences();
+        }
         function onWindowVisibleChanged() {
             if (searchController.windowVisible) {
                 reposition();
@@ -35,6 +49,9 @@ Window {
                 openAnim.start();
             } else {
                 closeAnim.start();
+                if (configService.clearOnHide) {
+                    searchController.query = "";
+                }
             }
         }
     }
@@ -64,7 +81,7 @@ Window {
     Item {
         id: cardContainer
         anchors.centerIn: parent
-        width: 680
+        width: configService.cardWidth
         opacity: 1.0
         transform: Translate { id: containerTranslate; y: 0 }
         height: {
@@ -73,8 +90,8 @@ Window {
             } else if (searchController.resultCount === 0) {
                 return 180; // Empty state height
             } else {
-                var visibleItems = Math.min(7, searchController.resultCount);
-                return Math.min(620, 76 + 12 + (visibleItems * 62));
+                var visibleItems = Math.min(configService.maxResults, searchController.resultCount);
+                return Math.min(76 + 12 + (configService.maxResults * 62), 76 + 12 + (visibleItems * 62));
             }
         }
 

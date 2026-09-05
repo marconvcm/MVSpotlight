@@ -69,12 +69,12 @@ Item {
         // Search Text Input
         TextInput {
             id: input
-            width: parent.width - 28 - parent.spacing - (clearBtn.visible ? clearBtn.width + 12 : 0)
+            width: parent.width - 28 - (parent.spacing * 2) - (clearBtn.visible ? clearBtn.width + 8 : 0) - prefBtn.width
             height: parent.height
             anchors.verticalCenter: parent.verticalCenter
             verticalAlignment: TextInput.AlignVCenter
 
-            font.pixelSize: 22
+            font.pixelSize: Math.round(22 * configService.fontSizeScale)
             font.weight: Font.Normal
             font.family: Qt.application.font.family
             color: themeService.textColor
@@ -97,6 +97,11 @@ Item {
             }
 
             Keys.onPressed: function(event) {
+                if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_Comma) {
+                    searchController.openPreferences();
+                    event.accepted = true;
+                    return;
+                }
                 if (event.key === Qt.Key_Down) {
                     root.downPressed();
                     event.accepted = true;
@@ -149,6 +154,37 @@ Item {
                 onClicked: {
                     input.text = "";
                     input.forceActiveFocus();
+                }
+            }
+        }
+
+        // Preferences Gear Button
+        Rectangle {
+            id: prefBtn
+            width: 28
+            height: 28
+            radius: 14
+            anchors.verticalCenter: parent.verticalCenter
+            color: prefMouse.containsMouse ? (themeService.isDark ? "#3A3A42" : "#E2E2E6") : "transparent"
+
+            Text {
+                anchors.centerIn: parent
+                text: "⚙"
+                font.pixelSize: 16
+                color: prefMouse.containsMouse ? themeService.accentColor : themeService.secondaryTextColor
+            }
+
+            ToolTip.visible: prefMouse.containsMouse
+            ToolTip.text: "Preferences (Ctrl+,)"
+            ToolTip.delay: 400
+
+            MouseArea {
+                id: prefMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    searchController.openPreferences();
                 }
             }
         }

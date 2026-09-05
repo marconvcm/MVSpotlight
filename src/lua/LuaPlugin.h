@@ -79,6 +79,9 @@ public:
     const QList<LuaProviderDef>& providers() const { return m_providers; }
     void addProvider(const LuaProviderDef &prov) { m_providers.append(prov); }
 
+    const QVariantList& settingsSchema() const { return m_settingsSchema; }
+    void setSettingsSchema(const QVariantList &schema) { m_settingsSchema = schema; }
+
     void clearRegistrations();
 
 private:
@@ -97,6 +100,7 @@ private:
     QString m_errorMessage;
     int m_failureCount{0};
 
+    QVariantList m_settingsSchema;
     QList<LuaCommandDef> m_commands;
     QList<LuaProviderDef> m_providers;
 };

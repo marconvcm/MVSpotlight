@@ -69,18 +69,18 @@ Item {
             onItemHovered: {
                 if (!root.keyboardNavigating) {
                     if (searchController.selectedIndex !== index) {
-                        searchController.setSelectedIndex(index);
+                        searchController.selectedIndex = index;
                     }
                 }
             }
 
             onItemClicked: {
-                searchController.setSelectedIndex(index);
+                searchController.selectedIndex = index;
                 searchController.executeIndex(index);
             }
 
             onSecondaryClicked: {
-                searchController.setSelectedIndex(index);
+                searchController.selectedIndex = index;
                 searchController.executeSecondaryIndex(index);
             }
         }

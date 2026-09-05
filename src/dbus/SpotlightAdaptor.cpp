@@ -56,6 +56,11 @@ QStringList MVSpotlightAdaptor::ListPlugins()
     return result;
 }
 
+void MVSpotlightAdaptor::OpenPreferences()
+{
+    m_controller->openPreferences();
+}
+
 SpotlightAdaptor::SpotlightAdaptor(SearchController *controller)
     : QDBusAbstractAdaptor(controller)
     , m_controller(controller)
@@ -109,3 +114,9 @@ QStringList SpotlightAdaptor::ListPlugins()
     }
     return result;
 }
+
+void SpotlightAdaptor::OpenPreferences()
+{
+    m_controller->openPreferences();
+}
+

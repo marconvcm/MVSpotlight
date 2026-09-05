@@ -10,5 +10,23 @@
     "permissions": [
         "application.launch",
         "network"
+    ],
+    "settings": [
+        {
+            "key": "default_engine",
+            "title": "Default Search Engine",
+            "type": "choice",
+            "choices": ["google", "duckduckgo", "bing", "kagi"],
+            "choiceLabels": ["Google", "DuckDuckGo", "Bing", "Kagi"],
+            "default": "google",
+            "description": "Default search provider for 's <query>' or 'search <query>'"
+        },
+        {
+            "key": "fallback_search",
+            "title": "Enable General Web Fallback",
+            "type": "boolean",
+            "default": false,
+            "description": "Suggest web search results when searching without a specific prefix"
+        }
     ]
 }

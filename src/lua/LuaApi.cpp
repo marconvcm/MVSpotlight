@@ -3,6 +3,7 @@
 #include "../services/NotificationService.h"
 #include "../services/ClipboardService.h"
 #include "../services/ProcessService.h"
+#include "../services/ConfigService.h"
 #include <QDesktopServices>
 #include <QUrl>
 #include <QSettings>
@@ -107,7 +108,21 @@ void LuaApi::registerApi(lua_State *L)
     lua_setfield(L, -2, "get");
     lua_setfield(L, -2, "http");
 
+    // launcher.config table
+    lua_newtable(L);
+    lua_pushcfunction(L, lua_get_config);
+    lua_setfield(L, -2, "get");
+    lua_pushcfunction(L, lua_set_config);
+    lua_setfield(L, -2, "set");
+    lua_setfield(L, -2, "config");
+
     lua_setglobal(L, "launcher");
+
+    // Also alias 'spotlight' and 'mvspotlight' globally to 'launcher'
+    lua_getglobal(L, "launcher");
+    lua_setglobal(L, "spotlight");
+    lua_getglobal(L, "launcher");
+    lua_setglobal(L, "mvspotlight");
 }
 
 int LuaApi::lua_register_command(lua_State *L)
@@ -313,19 +328,10 @@ int LuaApi::lua_get_config(lua_State *L)
     QString pluginId = plugin ? plugin->id() : "global";
 
     const char *key = luaL_checkstring(L, 1);
-    QSettings settings("mvspotlight", "plugins");
-    QString fullKey = "plugins/" + pluginId + "/" + QString::fromUtf8(key);
+    QString keyStr = QString::fromUtf8(key);
 
-    if (settings.contains(fullKey)) {
-        QVariant val = settings.value(fullKey);
-        LuaEngine::pushVariant(L, val);
-        return 1;
-    }
-
-    // Fallback to legacy settings
-    QSettings legacySettings("spotlight-qt", "plugins");
-    if (legacySettings.contains(fullKey)) {
-        QVariant val = legacySettings.value(fullKey);
+    QVariant val = ConfigService::instance().getPluginSetting(pluginId, keyStr);
+    if (val.isValid() && !val.isNull()) {
         LuaEngine::pushVariant(L, val);
         return 1;
     }
@@ -348,10 +354,7 @@ int LuaApi::lua_set_config(lua_State *L)
     const char *key = luaL_checkstring(L, 1);
     QVariant val = LuaEngine::toVariant(L, 2);
 
-    QSettings settings("mvspotlight", "plugins");
-    QString fullKey = "plugins/" + pluginId + "/" + QString::fromUtf8(key);
-    settings.setValue(fullKey, val);
-    settings.sync();
+    ConfigService::instance().setPluginSetting(pluginId, QString::fromUtf8(key), val);
     return 0;
 }
 
@@ -389,12 +392,20 @@ int LuaApi::lua_process_run(lua_State *L)
     lua_pop(L, 1);
 
     lua_getfield(L, 1, "arguments");
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        lua_getfield(L, 1, "args");
+    }
     if (lua_istable(L, -1)) {
         args = variantListToStringList(LuaEngine::toVariantList(L, -1));
     }
     lua_pop(L, 1);
 
     lua_getfield(L, 1, "timeout");
+    if (!lua_isnumber(L, -1)) {
+        lua_pop(L, 1);
+        lua_getfield(L, 1, "timeout_ms");
+    }
     if (lua_isnumber(L, -1)) timeoutMs = static_cast<int>(lua_tointeger(L, -1));
     lua_pop(L, 1);
 
@@ -449,12 +460,20 @@ int LuaApi::lua_process_run_async(lua_State *L)
     lua_pop(L, 1);
 
     lua_getfield(L, 1, "arguments");
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        lua_getfield(L, 1, "args");
+    }
     if (lua_istable(L, -1)) {
         args = variantListToStringList(LuaEngine::toVariantList(L, -1));
     }
     lua_pop(L, 1);
 
     lua_getfield(L, 1, "timeout");
+    if (!lua_isnumber(L, -1)) {
+        lua_pop(L, 1);
+        lua_getfield(L, 1, "timeout_ms");
+    }
     if (lua_isnumber(L, -1)) timeoutMs = static_cast<int>(lua_tointeger(L, -1));
     lua_pop(L, 1);
 
@@ -478,6 +497,11 @@ int LuaApi::lua_process_run_async(lua_State *L)
 
         lua_rawgeti(state, LUA_REGISTRYINDEX, cbRef);
         luaL_unref(state, LUA_REGISTRYINDEX, cbRef);
+
+        if (!lua_isfunction(state, -1)) {
+            lua_pop(state, 1);
+            return;
+        }
 
         lua_newtable(state);
         lua_pushboolean(state, res.success);
@@ -547,6 +571,12 @@ int LuaApi::lua_http_get(lua_State *L)
         if (state) {
             lua_rawgeti(state, LUA_REGISTRYINDEX, cbRef);
             luaL_unref(state, LUA_REGISTRYINDEX, cbRef);
+
+            if (!lua_isfunction(state, -1)) {
+                lua_pop(state, 1);
+                reply->deleteLater();
+                return;
+            }
 
             int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
             QString body = QString::fromUtf8(reply->readAll());

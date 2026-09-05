@@ -3,9 +3,13 @@
 #include "../src/providers/SettingsProvider.h"
 #include "../src/providers/ActionProvider.h"
 #include "../src/services/UsageHistory.h"
+#include "../src/services/DesktopEntryService.h"
+#include "../src/core/SearchController.h"
 #include "../src/lua/LuaEngine.h"
 #include "../src/lua/LuaPermissions.h"
 #include "../src/lua/LuaPluginManager.h"
+#include "../src/services/ConfigService.h"
+#include "../src/providers/DeveloperCommandProvider.h"
 
 class TestMVSpotlight : public QObject
 {
@@ -17,12 +21,16 @@ private slots:
     void testUsageHistoryFrecency();
     void testSettingsSearch();
     void testActionSearch();
+    void testDesktopEntrySearch();
+    void testSearchControllerSettingsDispatch();
     void testLuaEngineExecution();
     void testLuaEngineErrorCatching();
     void testLuaPermissions();
     void testLuaPluginManagerLoad();
     void testCurrencyPlugin();
     void testWeatherPlugin();
+    void testConfigService();
+    void testDeveloperCommandProvider();
 };
 
 void TestMVSpotlight::testCalculatorValid()
@@ -62,9 +70,10 @@ void TestMVSpotlight::testCalculatorInvalid()
 void TestMVSpotlight::testUsageHistoryFrecency()
 {
     UsageHistory &history = UsageHistory::instance();
-    QString testId = "test:app:myapp";
+    QString testId = QString("test:app:frecency_%1").arg(QDateTime::currentMSecsSinceEpoch());
 
     double initialBoost = history.frecencyBoost(testId);
+    QCOMPARE(initialBoost, 0.0);
     history.recordLaunch(testId);
     double boosted = history.frecencyBoost(testId);
 
@@ -80,6 +89,10 @@ void TestMVSpotlight::testSettingsSearch()
 
     auto resDisp = settings.search("display");
     QVERIFY(!resDisp.isEmpty());
+
+    auto resGnomeSettings = settings.search("gnome settings");
+    QVERIFY(!resGnomeSettings.isEmpty());
+    QCOMPARE(resGnomeSettings.first().id(), QString("settings:main"));
 }
 
 void TestMVSpotlight::testActionSearch()
@@ -91,6 +104,40 @@ void TestMVSpotlight::testActionSearch()
 
     auto resTerm = actions.search("terminal");
     QVERIFY(!resTerm.isEmpty());
+}
+
+void TestMVSpotlight::testDesktopEntrySearch()
+{
+    DesktopEntryService::instance().scanApplications();
+    auto results = DesktopEntryService::instance().search("gnome settings");
+    bool foundSettings = false;
+    for (const auto &r : results) {
+        if (r.id().contains("Settings", Qt::CaseInsensitive)) {
+            foundSettings = true;
+            break;
+        }
+    }
+    QVERIFY(foundSettings);
+}
+
+void TestMVSpotlight::testSearchControllerSettingsDispatch()
+{
+    SearchController controller;
+    QVERIFY(controller.init());
+
+    controller.setQuery("gnome settings");
+    QVERIFY(controller.resultCount() > 0);
+
+    bool foundSettings = false;
+    for (int i = 0; i < controller.resultCount(); ++i) {
+        auto map = controller.model()->get(i);
+        QString id = map.value("id").toString();
+        if (id == "settings:main" || id.contains("Settings", Qt::CaseInsensitive)) {
+            foundSettings = true;
+            break;
+        }
+    }
+    QVERIFY(foundSettings);
 }
 
 void TestMVSpotlight::testLuaEngineExecution()
@@ -207,6 +254,60 @@ void TestMVSpotlight::testWeatherPlugin()
     auto res4 = manager.searchAll("london weather");
     QVERIFY(!res4.isEmpty());
     QVERIFY(res4.first().title().contains("London") || res4.first().title().contains("Weather"));
+}
+
+void TestMVSpotlight::testConfigService()
+{
+    ConfigService &cfg = ConfigService::instance();
+
+    // Test appearance setters/getters
+    cfg.setAccentColor("#10B981");
+    QCOMPARE(cfg.accentColor(), QString("#10B981"));
+
+    cfg.setCardWidth(750);
+    QCOMPARE(cfg.cardWidth(), 750);
+
+    cfg.setCornerRadius(20);
+    QCOMPARE(cfg.cornerRadius(), 20);
+
+    cfg.setSurfaceOpacity(0.92);
+    QCOMPARE(cfg.surfaceOpacity(), 0.92);
+
+    cfg.setThemeMode("dark");
+    QCOMPARE(cfg.themeMode(), QString("dark"));
+
+    // Test plugin enable/disable
+    cfg.setPluginEnabled("test.plugin", false);
+    QCOMPARE(cfg.isPluginEnabled("test.plugin"), false);
+    cfg.setPluginEnabled("test.plugin", true);
+    QCOMPARE(cfg.isPluginEnabled("test.plugin"), true);
+
+    // Test plugin custom settings
+    cfg.setPluginSetting("test.plugin", "custom_key", "custom_val");
+    QCOMPARE(cfg.getPluginSetting("test.plugin", "custom_key").toString(), QString("custom_val"));
+    QCOMPARE(cfg.getPluginSetting("test.plugin", "missing_key", "default_val").toString(), QString("default_val"));
+}
+
+void TestMVSpotlight::testDeveloperCommandProvider()
+{
+    DeveloperCommandProvider dev;
+
+    // Test preferences commands
+    auto resPref = dev.search("preferences");
+    QVERIFY(!resPref.isEmpty());
+    QCOMPARE(resPref.first().action(), QString("open_preferences"));
+
+    auto resSettings = dev.search("settings");
+    QVERIFY(!resSettings.isEmpty());
+    QCOMPARE(resSettings.first().action(), QString("open_preferences"));
+
+    auto resPlugins = dev.search("plugins");
+    QVERIFY(!resPlugins.isEmpty());
+    QCOMPARE(resPlugins.first().action(), QString("open_preferences"));
+
+    auto resReload = dev.search("reload");
+    QVERIFY(!resReload.isEmpty());
+    QCOMPARE(resReload.first().action(), QString("reload_plugins"));
 }
 
 QTEST_MAIN(TestMVSpotlight)

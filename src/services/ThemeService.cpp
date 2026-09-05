@@ -1,4 +1,5 @@
 #include "ThemeService.h"
+#include "ConfigService.h"
 #include <QGuiApplication>
 #include <QDBusConnection>
 #include <QDBusMessage>
@@ -17,18 +18,25 @@ ThemeService::ThemeService(QObject *parent)
     checkGnomeTheme();
     setupGnomeListener();
 
+    // Listen to Qt Style hints
     if (QGuiApplication::styleHints()) {
         connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged,
                 this, [this](Qt::ColorScheme scheme) {
-            if (!m_manualOverride) {
-                bool dark = (scheme == Qt::ColorScheme::Dark);
-                if (m_isDark != dark) {
-                    m_isDark = dark;
-                    emit themeChanged();
-                }
+            m_gnomeDark = (scheme == Qt::ColorScheme::Dark);
+            if (ConfigService::instance().themeMode() == "auto") {
+                updateEffectiveTheme();
             }
         });
     }
+
+    // Connect to ConfigService appearance updates
+    ConfigService &cfg = ConfigService::instance();
+    connect(&cfg, &ConfigService::themeModeChanged, this, &ThemeService::updateEffectiveTheme);
+    connect(&cfg, &ConfigService::accentColorChanged, this, &ThemeService::themeChanged);
+    connect(&cfg, &ConfigService::surfaceOpacityChanged, this, &ThemeService::themeChanged);
+    connect(&cfg, &ConfigService::cornerRadiusChanged, this, &ThemeService::themeChanged);
+
+    updateEffectiveTheme();
 }
 
 void ThemeService::setupGnomeListener()
@@ -46,22 +54,19 @@ void ThemeService::setupGnomeListener()
 
 void ThemeService::checkGnomeTheme()
 {
-    if (m_manualOverride)
-        return;
-
     // First check Qt styleHints if available
     if (QGuiApplication::styleHints()) {
         Qt::ColorScheme scheme = QGuiApplication::styleHints()->colorScheme();
         if (scheme == Qt::ColorScheme::Dark) {
-            if (!m_isDark) {
-                m_isDark = true;
-                emit themeChanged();
+            m_gnomeDark = true;
+            if (ConfigService::instance().themeMode() == "auto") {
+                updateEffectiveTheme();
             }
             return;
         } else if (scheme == Qt::ColorScheme::Light) {
-            if (m_isDark) {
-                m_isDark = false;
-                emit themeChanged();
+            m_gnomeDark = false;
+            if (ConfigService::instance().themeMode() == "auto") {
+                updateEffectiveTheme();
             }
             return;
         }
@@ -72,27 +77,61 @@ void ThemeService::checkGnomeTheme()
     proc.start("gsettings", {"get", "org.gnome.desktop.interface", "color-scheme"});
     if (proc.waitForFinished(1000)) {
         QString out = QString::fromUtf8(proc.readAllStandardOutput()).trimmed();
-        bool dark = out.contains("prefer-dark");
-        if (m_isDark != dark) {
-            m_isDark = dark;
-            emit themeChanged();
+        m_gnomeDark = out.contains("prefer-dark");
+        if (ConfigService::instance().themeMode() == "auto") {
+            updateEffectiveTheme();
         }
     }
 }
 
+void ThemeService::updateEffectiveTheme()
+{
+    QString mode = ConfigService::instance().themeMode();
+    bool newDark = m_gnomeDark;
+    if (mode == "dark") {
+        newDark = true;
+    } else if (mode == "light") {
+        newDark = false;
+    } else {
+        newDark = m_gnomeDark;
+    }
+
+    if (m_isDark != newDark) {
+        m_isDark = newDark;
+    }
+    emit themeChanged();
+}
+
+bool ThemeService::isDark() const
+{
+    return m_isDark;
+}
+
+QString ThemeService::themeMode() const
+{
+    return ConfigService::instance().themeMode();
+}
+
 void ThemeService::toggleTheme()
 {
-    m_manualOverride = true;
-    m_isDark = !m_isDark;
-    emit themeChanged();
+    QString current = ConfigService::instance().themeMode();
+    if (current == "auto") {
+        ConfigService::instance().setThemeMode("dark");
+    } else if (current == "dark") {
+        ConfigService::instance().setThemeMode("light");
+    } else {
+        ConfigService::instance().setThemeMode("auto");
+    }
 }
 
 QColor ThemeService::backgroundColor() const
 {
+    int alpha = static_cast<int>(surfaceOpacity() * 255.0);
+    alpha = qBound(50, alpha, 255);
     if (m_isDark) {
-        return QColor(28, 28, 32, 226); // ~0.88 opacity charcoal
+        return QColor(28, 28, 32, alpha);
     } else {
-        return QColor(245, 245, 248, 226); // ~0.88 opacity off-white
+        return QColor(245, 245, 248, alpha);
     }
 }
 
@@ -101,16 +140,16 @@ QColor ThemeService::cardBackground() const
     if (m_isDark) {
         return QColor(42, 42, 48, 200);
     } else {
-        return QColor(255, 255, 255, 210);
+        return QColor(255, 255, 255, 215);
     }
 }
 
 QColor ThemeService::borderColor() const
 {
     if (m_isDark) {
-        return QColor(255, 255, 255, 28); // subtle white border ~11%
+        return QColor(255, 255, 255, 32);
     } else {
-        return QColor(0, 0, 0, 22); // subtle dark border ~8%
+        return QColor(0, 0, 0, 24);
     }
 }
 
@@ -134,24 +173,30 @@ QColor ThemeService::secondaryTextColor() const
 
 QColor ThemeService::accentColor() const
 {
-    return QColor(53, 132, 228); // GNOME blue
+    QString hex = ConfigService::instance().accentColor();
+    QColor c(hex);
+    if (c.isValid()) {
+        return c;
+    }
+    return QColor(53, 132, 228); // Fallback GNOME Blue
 }
 
 QColor ThemeService::selectionColor() const
 {
+    QColor acc = accentColor();
     if (m_isDark) {
-        return QColor(255, 255, 255, 30);
+        return QColor(acc.red(), acc.green(), acc.blue(), 55);
     } else {
-        return QColor(0, 0, 0, 18);
+        return QColor(acc.red(), acc.green(), acc.blue(), 38);
     }
 }
 
 QColor ThemeService::searchBackground() const
 {
     if (m_isDark) {
-        return QColor(255, 255, 255, 12);
+        return QColor(255, 255, 255, 14);
     } else {
-        return QColor(0, 0, 0, 8);
+        return QColor(0, 0, 0, 10);
     }
 }
 
@@ -162,4 +207,14 @@ QColor ThemeService::shadowColor() const
     } else {
         return QColor(0, 0, 0, 50);
     }
+}
+
+qreal ThemeService::surfaceOpacity() const
+{
+    return ConfigService::instance().surfaceOpacity();
+}
+
+int ThemeService::cornerRadius() const
+{
+    return ConfigService::instance().cornerRadius();
 }

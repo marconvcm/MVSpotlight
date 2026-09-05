@@ -91,6 +91,12 @@ void UsageHistory::save()
     }
 }
 
+void UsageHistory::clear()
+{
+    m_entries.clear();
+    save();
+}
+
 void UsageHistory::recordLaunch(const QString &id)
 {
     if (id.isEmpty())

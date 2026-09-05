@@ -60,6 +60,7 @@ set(PROJECT_SOURCES
     src/services/ClipboardService.cpp
     src/services/NotificationService.cpp
     src/services/ThemeService.cpp
+    src/services/ConfigService.cpp
     src/services/IconImageProvider.cpp
     src/dbus/SpotlightAdaptor.cpp
     qml/qml.qrc
@@ -101,10 +102,12 @@ endif()
 # Installation rules
 include(GNUInstallDirs)
 install(TARGETS mvspotlight DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES data/mvspotlight.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
-install(FILES data/autostart/mvspotlight.desktop DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/xdg/autostart)
+install(FILES data/mvspotlight.desktop data/mvspotlight-preferences.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+install(FILES data/autostart/mvspotlight.desktop DESTINATION /etc/xdg/autostart)
 install(FILES assets/icons/mvspotlight.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
 install(DIRECTORY plugins/examples/ DESTINATION ${CMAKE_INSTALL_DATADIR}/mvspotlight/plugins)
+install(FILES data/systemd/mvspotlight.service DESTINATION lib/systemd/user)
+install(FILES LICENSE README.md DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mvspotlight)
 
 # Testing
 enable_testing()
@@ -133,6 +136,7 @@ add_executable(mvspotlight_tests
     src/services/ClipboardService.cpp
     src/services/NotificationService.cpp
     src/services/ThemeService.cpp
+    src/services/ConfigService.cpp
     src/services/IconImageProvider.cpp
     src/dbus/SpotlightAdaptor.cpp
 )
@@ -164,3 +168,62 @@ target_link_libraries(mvspotlight_tests PRIVATE
 )
 
 add_test(NAME mvspotlight_tests COMMAND mvspotlight_tests)
+
+# ------------------------------------------------------------------------------
+# CPack Packaging Configuration (RPM, TGZ)
+# ------------------------------------------------------------------------------
+set(CPACK_PACKAGE_NAME "mvspotlight")
+set(CPACK_PACKAGE_VENDOR "MVSpotlight")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "macOS Spotlight-inspired launcher for GNOME 50 on Wayland")
+set(CPACK_PACKAGE_DESCRIPTION "A polished desktop launcher and search application for GNOME 50 on Linux, \
+inspired by the visual refinement of macOS Spotlight, built with Qt 6, Qt Quick, Wayland-native \
+architecture, and an extensible Lua plugin system.")
+set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/marconvcm/MVSpotlight")
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_PACKAGE_CONTACT "MVSpotlight Contributors <marconvm@users.noreply.github.com>")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+set(CPACK_PACKAGE_RELOCATABLE FALSE)
+
+# Default generators
+set(CPACK_GENERATOR "RPM;TGZ")
+
+# RPM Generator Settings
+set(CPACK_RPM_PACKAGE_NAME "mvspotlight")
+set(CPACK_RPM_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_RPM_PACKAGE_RELEASE "1.fc44")
+set(CPACK_RPM_PACKAGE_LICENSE "MIT")
+set(CPACK_RPM_PACKAGE_GROUP "Applications/System")
+set(CPACK_RPM_PACKAGE_URL "https://github.com/marconvcm/MVSpotlight")
+set(CPACK_RPM_PACKAGE_AUTOREQ "YES")
+set(CPACK_RPM_PACKAGE_AUTOPROV "YES")
+set(CPACK_RPM_PACKAGE_RELOCATABLE FALSE)
+set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
+set(CPACK_RPM_PACKAGE_DESCRIPTION "${CPACK_PACKAGE_DESCRIPTION}")
+set(CPACK_RPM_PACKAGE_SUGGESTS "gh")
+
+# Exclude standard filesystem directories owned by base Fedora packages
+set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
+    /usr/bin
+    /usr/lib
+    /usr/lib/systemd
+    /usr/lib/systemd/user
+    /usr/share
+    /usr/share/applications
+    /usr/share/icons
+    /usr/share/icons/hicolor
+    /usr/share/icons/hicolor/scalable
+    /usr/share/icons/hicolor/scalable/apps
+    /etc
+    /etc/xdg
+    /etc/xdg/autostart
+)
+
+# Post install and post uninstall scripts for icon cache updates
+set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/packaging/rpm/post_install.sh")
+set(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/packaging/rpm/post_uninstall.sh")
+
+include(CPack)

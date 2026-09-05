@@ -26,6 +26,8 @@ public:
 
     void load();
     void save();
+    Q_INVOKABLE void clear();
+    Q_INVOKABLE int entryCount() const { return m_entries.size(); }
 
 private:
     explicit UsageHistory(QObject *parent = nullptr);

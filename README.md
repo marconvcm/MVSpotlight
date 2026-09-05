@@ -45,15 +45,97 @@ A high-performance, keyboard-first desktop launcher and command palette for **GN
 | Shortcut | Action |
 |---|---|
 | `Alt + Space` | Toggle MVSpotlight launcher |
+| `Ctrl + ,` | Open MVSpotlight Preferences |
 | `Down Arrow` / `Tab` | Select next result |
 | `Up Arrow` / `Shift + Tab` | Select previous result |
 | `Enter` | Execute selected action |
 | `Ctrl + Enter` | Trigger secondary action (e.g. Copy ID / Reveal) |
 | `Escape` | Clear query (if text present) or dismiss launcher |
-| `:plugins` | List loaded Lua plugins and states |
+| `:settings` / `preferences` | Open Preferences panel directly from search |
+| `:plugins` | Open plugin management panel |
 | `:reload` | Hot-reload all Lua plugins |
 | `:theme` | Toggle light/dark palette |
 | `:logs` | View persistent launcher logs |
+
+---
+
+## Preferences & Customization Panel
+
+MVSpotlight includes a built-in, Wayland-native **Preferences Window** to customize your look & feel and configure plugins.
+
+### Opening Preferences:
+- **Gear Icon**: Click the ⚙️ button in the search bar.
+- **Keyboard Shortcut**: Press `Ctrl + ,` while the launcher is open.
+- **Search Command**: Type `settings`, `preferences`, or `:settings` and press `Enter`.
+- **CLI / D-Bus**: Run `mvspotlight --preferences` (or `-p`).
+- **GNOME App Grid**: Click "MVSpotlight Preferences" in your desktop application launcher.
+
+### Configuration Tabs:
+1. 🎨 **Appearance**:
+   - **Theme Mode**: Auto (follows GNOME system dark/light preference), Dark, or Light.
+   - **Accent Palette**: 9 vibrant presets (macOS Blue, Emerald Green, Electric Indigo, Royal Purple, Coral Rose, Amber Orange, Cyan Teal, Ruby Crimson, Graphite) plus custom HEX input with live color indicator.
+   - **Surface Opacity**: Adjustable translucent glassmorphism (65% to 100%).
+   - **Corner Radius**: From sharp-modern (10px) to ultra-curved macOS style (36px).
+   - **Card Width**: From compact (540px) to expansive widescreen (920px).
+   - **Font Scaling**: 80% to 135% for high-DPI displays.
+   - **Interactive Live Preview**: Real-time mock Spotlight card reflecting all adjustments instantly before closing.
+2. 🧩 **Plugins**:
+   - **Enable / Disable Toggles**: Enable or disable any plugin on the fly with automatic provider reloading.
+   - **Security Inspection**: Displays all requested sandbox permissions per plugin (`network`, `process.execute`, etc.).
+   - **Schema-Driven Settings**: Interactive fields (text inputs, masked passwords, dropdown choices, and toggle switches) dynamically generated from `manifest.json`.
+   - **Plugin Folder**: Quick button to open the plugin folder in GNOME Files.
+3. ⚙️ **General**:
+   - Shortcut configuration & direct link to GNOME Settings keyboard shortcuts.
+   - Max search results limit (3 to 15).
+   - "Clear query on dismiss" toggle.
+   - Search frecency statistics and one-click "Clear Search History" button.
+4. ℹ️ **About**:
+   - App version, architecture details, and documentation links.
+
+---
+
+### Declaring Configurable Plugin Settings
+
+Plugins can declare a `"settings"` schema array in their `manifest.json`. MVSpotlight automatically renders matching UI controls in the Preferences panel and persists values in `~/.config/mvspotlight/settings.ini`:
+
+```json
+{
+    "id": "org.mvspotlight.weather",
+    "name": "Weather",
+    "version": "1.0.0",
+    "settings": [
+        {
+            "key": "default_city",
+            "title": "Default Location / City",
+            "type": "string",
+            "default": "",
+            "description": "City to query when typing 'weather' alone"
+        },
+        {
+            "key": "temperature_unit",
+            "title": "Preferred Temperature Unit",
+            "type": "choice",
+            "choices": ["c", "f"],
+            "choiceLabels": ["Celsius (°C)", "Fahrenheit (°F)"],
+            "default": "c"
+        },
+        {
+            "key": "show_forecast",
+            "title": "Show High/Low Forecast Card",
+            "type": "boolean",
+            "default": true
+        }
+    ]
+}
+```
+
+In your `plugin.lua`, read configuration values anytime using `launcher.get_config`:
+
+```lua
+local city = launcher.get_config("default_city", "")
+local unit = launcher.get_config("temperature_unit", "c")
+local forecast_enabled = launcher.get_config("show_forecast", true)
+```
 
 ---
 

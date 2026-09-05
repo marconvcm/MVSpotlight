@@ -2,3 +2,6 @@ build/
 *.o
 *.a
 .cache/
+_CPack_Packages/
+*.rpm
+*.tar.gz

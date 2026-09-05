@@ -17,4 +17,5 @@ public:
 
 signals:
     void reloadPluginsRequested();
+    void openPreferencesRequested();
 };

@@ -12,5 +12,30 @@
         "notifications",
         "clipboard.write",
         "application.launch"
+    ],
+    "settings": [
+        {
+            "key": "default_city",
+            "title": "Default Location / City",
+            "type": "string",
+            "default": "",
+            "description": "City or location when typing 'weather' alone (leave empty for IP auto-detect)"
+        },
+        {
+            "key": "temperature_unit",
+            "title": "Preferred Temperature Unit",
+            "type": "choice",
+            "choices": ["c", "f"],
+            "choiceLabels": ["Celsius (°C)", "Fahrenheit (°F)"],
+            "default": "c",
+            "description": "Temperature format to display first in results"
+        },
+        {
+            "key": "show_forecast",
+            "title": "Show High/Low Forecast Card",
+            "type": "boolean",
+            "default": true,
+            "description": "Display day forecast min/max card below current temperature"
+        }
     ]
 }
