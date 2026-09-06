@@ -10,6 +10,10 @@
 #include "../src/lua/LuaPluginManager.h"
 #include "../src/services/ConfigService.h"
 #include "../src/providers/DeveloperCommandProvider.h"
+#include "../src/providers/FileProvider.h"
+#include "../src/providers/AiProvider.h"
+#include "../src/services/AiService.h"
+#include "../src/services/MarkdownRenderer.h"
 
 class TestMVSpotlight : public QObject
 {
@@ -23,6 +27,7 @@ private slots:
     void testActionSearch();
     void testDesktopEntrySearch();
     void testSearchControllerSettingsDispatch();
+    void testSearchDebounce();
     void testLuaEngineExecution();
     void testLuaEngineErrorCatching();
     void testLuaPermissions();
@@ -31,6 +36,12 @@ private slots:
     void testWeatherPlugin();
     void testConfigService();
     void testDeveloperCommandProvider();
+    void testFileProviderWorkspaceFolder();
+    void testDeveloperToolsWorkspaceSettings();
+    void testAiModeDetection();
+    void testAiProviderSearch();
+    void testAiConfigService();
+    void testMarkdownRendering();
 };
 
 void TestMVSpotlight::testCalculatorValid()
@@ -126,6 +137,7 @@ void TestMVSpotlight::testSearchControllerSettingsDispatch()
     QVERIFY(controller.init());
 
     controller.setQuery("gnome settings");
+    controller.flushSearch();
     QVERIFY(controller.resultCount() > 0);
 
     bool foundSettings = false;
@@ -138,6 +150,44 @@ void TestMVSpotlight::testSearchControllerSettingsDispatch()
         }
     }
     QVERIFY(foundSettings);
+}
+
+void TestMVSpotlight::testSearchDebounce()
+{
+    SearchController controller;
+    QVERIFY(controller.init());
+
+    // 1. Test rapid keystroke coalescing with debounce = 80ms
+    ConfigService::instance().setSearchDebounceMs(80);
+
+    // Initial state with empty query
+    controller.setQuery("");
+
+    // Type rapidly - search is debounced
+    controller.setQuery("xyznonexistent");
+    QVERIFY(controller.isSearching());
+
+    // Flush manually (e.g. user pressing Enter or arrow key)
+    controller.flushSearch();
+    QCOMPARE(controller.resultCount(), 0);
+
+    // 2. Test natural timer expiration with QTRY_VERIFY_WITH_TIMEOUT
+    controller.setQuery("wifi");
+    QVERIFY(controller.isSearching());
+    QTRY_VERIFY_WITH_TIMEOUT(controller.resultCount() > 0, 500);
+
+    // 3. Test debounce = 0 (instant search)
+    ConfigService::instance().setSearchDebounceMs(0);
+    controller.setQuery("gnome settings");
+    // With debounce = 0, sync search executes immediately without waiting
+    QVERIFY(controller.resultCount() > 0);
+
+    // 4. Test instant search when clearing query to empty
+    controller.setQuery("");
+    QCOMPARE(controller.query(), QString(""));
+
+    // Restore standard default
+    ConfigService::instance().setSearchDebounceMs(100);
 }
 
 void TestMVSpotlight::testLuaEngineExecution()
@@ -276,6 +326,10 @@ void TestMVSpotlight::testConfigService()
     cfg.setThemeMode("dark");
     QCOMPARE(cfg.themeMode(), QString("dark"));
 
+    cfg.setSearchDebounceMs(150);
+    QCOMPARE(cfg.searchDebounceMs(), 150);
+    cfg.setSearchDebounceMs(100); // restore default
+
     // Test plugin enable/disable
     cfg.setPluginEnabled("test.plugin", false);
     QCOMPARE(cfg.isPluginEnabled("test.plugin"), false);
@@ -308,6 +362,168 @@ void TestMVSpotlight::testDeveloperCommandProvider()
     auto resReload = dev.search("reload");
     QVERIFY(!resReload.isEmpty());
     QCOMPARE(resReload.first().action(), QString("reload_plugins"));
+}
+
+void TestMVSpotlight::testFileProviderWorkspaceFolder()
+{
+    FileProvider provider;
+    QSignalSpy spy(&provider, &FileProvider::resultsReady);
+
+    provider.searchAsync(1, "workspace");
+    QVERIFY(spy.wait(2000));
+
+    QList<QVariant> arguments = spy.takeFirst();
+    QList<SearchResult> results = arguments.at(1).value<QList<SearchResult>>();
+
+    bool foundWorkspace = false;
+    for (const auto &res : results) {
+        if (res.title().compare("workspace", Qt::CaseInsensitive) == 0 && res.type() == "Folder") {
+            foundWorkspace = true;
+            QVERIFY(res.metadataValue("filePath").toString().endsWith("Workspace"));
+            break;
+        }
+    }
+    QVERIFY(foundWorkspace);
+}
+
+void TestMVSpotlight::testDeveloperToolsWorkspaceSettings()
+{
+    ConfigService &cfg = ConfigService::instance();
+    cfg.setPluginSetting("org.mvspotlight.devtools", "workspace_path", "~/CustomWorkspace");
+    QCOMPARE(cfg.getPluginSetting("org.mvspotlight.devtools", "workspace_path").toString(), QString("~/CustomWorkspace"));
+
+    // Reset back
+    cfg.setPluginSetting("org.mvspotlight.devtools", "workspace_path", "~/Workspace");
+}
+
+void TestMVSpotlight::testAiModeDetection()
+{
+    SearchController controller;
+    QCOMPARE(controller.isAiMode(), false);
+
+    controller.setQuery("firefox");
+    QCOMPARE(controller.isAiMode(), false);
+
+    controller.setQuery(">");
+    QCOMPARE(controller.isAiMode(), true);
+
+    controller.setQuery("> explain quantum computing");
+    QCOMPARE(controller.isAiMode(), true);
+
+    controller.setQuery("   > what is the weather");
+    QCOMPARE(controller.isAiMode(), true);
+
+    controller.setQuery("terminal > logs");
+    QCOMPARE(controller.isAiMode(), false);
+}
+
+void TestMVSpotlight::testAiProviderSearch()
+{
+    AiProvider ai;
+    auto resEmpty = ai.search("firefox");
+    QVERIFY(resEmpty.isEmpty());
+
+    // Without API key, should prompt user to configure in Preferences
+    ConfigService::instance().setAiApiKey("");
+    ConfigService::instance().setAiProvider("gemini");
+    auto resPrompt = ai.search("> explain rust borrow checker");
+    QVERIFY(!resPrompt.isEmpty());
+    QCOMPARE(resPrompt.first().action(), QString("open_preferences"));
+
+    // With API key configured, should yield ask_ai action for both > prefix and normal queries
+    ConfigService::instance().setAiApiKey("test-key-12345");
+    auto resQuery = ai.search("> explain rust borrow checker");
+    QVERIFY(!resQuery.isEmpty());
+    QCOMPARE(resQuery.first().type(), QString("AI"));
+    QCOMPARE(resQuery.first().action(), QString("ask_ai"));
+    QVERIFY(resQuery.first().title().contains("explain rust borrow checker"));
+
+    auto resNormal = ai.search("what your meaning?");
+    QVERIFY(!resNormal.isEmpty());
+    QCOMPARE(resNormal.first().type(), QString("AI"));
+    QCOMPARE(resNormal.first().action(), QString("ask_ai"));
+
+    // Verify SearchController integration
+    SearchController controller;
+    controller.init();
+
+    controller.setQuery("> what your meaning?");
+    controller.flushSearch();
+    QVERIFY(controller.resultCount() > 0);
+    QCOMPARE(controller.currentResult()["type"].toString(), QString("AI"));
+
+    controller.setQuery("what your meaning?");
+    controller.flushSearch();
+    QVERIFY(controller.resultCount() > 0);
+    QCOMPARE(controller.currentResult()["type"].toString(), QString("AI"));
+
+    // Clean up
+    ConfigService::instance().setAiApiKey("");
+}
+
+void TestMVSpotlight::testAiConfigService()
+{
+    ConfigService &cfg = ConfigService::instance();
+    QString origProvider = cfg.aiProvider();
+    QString origModel = cfg.aiModel();
+    QString origColor = cfg.aiAccentColor();
+
+    cfg.setAiProvider("openai");
+    QCOMPARE(cfg.aiProvider(), QString("openai"));
+    QCOMPARE(cfg.aiModel(), QString("gpt-4o-mini"));
+
+    cfg.setAiProvider("claude");
+    QCOMPARE(cfg.aiProvider(), QString("claude"));
+    QCOMPARE(cfg.aiModel(), QString("claude-3-5-sonnet-20241022"));
+
+    cfg.setAiProvider("ollama");
+    QCOMPARE(cfg.aiProvider(), QString("ollama"));
+    QCOMPARE(cfg.aiModel(), QString("llama3.2"));
+
+    cfg.setAiAccentColor("#FF007F");
+    QCOMPARE(cfg.aiAccentColor(), QString("#FF007F"));
+
+    cfg.setAiTemperature(1.2);
+    QCOMPARE(cfg.aiTemperature(), 1.2);
+
+    cfg.setAiMaxTokens(2048);
+    QCOMPARE(cfg.aiMaxTokens(), 2048);
+
+    // Restore original values
+    cfg.setAiProvider(origProvider);
+    cfg.setAiModel(origModel);
+    cfg.setAiAccentColor(origColor);
+}
+
+void TestMVSpotlight::testMarkdownRendering()
+{
+    QString md = "# Title Heading\n\n"
+                 "This is **bold** text and *italic* text.\n\n"
+                 "```python\n"
+                 "def add(a, b):\n"
+                 "    return a + b\n"
+                 "```\n\n"
+                 "* Item Alpha\n"
+                 "* Item Beta\n\n"
+                 "[Google Search](https://google.com)";
+
+    QString htmlDark = MarkdownRenderer::toHtml(md, true, "#8A2BE2");
+    QVERIFY(!htmlDark.isEmpty());
+    QVERIFY(htmlDark.contains("<h1"));
+    QVERIFY(htmlDark.contains("Title Heading"));
+    QVERIFY(htmlDark.contains("<pre"));
+    QVERIFY(htmlDark.contains("def add(a, b):"));
+    QVERIFY(htmlDark.contains("Item Alpha"));
+    QVERIFY(htmlDark.contains("https://google.com"));
+    QVERIFY(htmlDark.contains("color: #8A2BE2"));
+
+    QString htmlLight = MarkdownRenderer::toHtml(md, false, "#3584E4");
+    QVERIFY(!htmlLight.isEmpty());
+    QVERIFY(htmlLight.contains("color: #3584E4"));
+
+    // Verify AiService wrapper
+    QString rendered = AiService::instance().renderMarkdown(md, true, "#8A2BE2");
+    QCOMPARE(rendered, htmlDark);
 }
 
 QTEST_MAIN(TestMVSpotlight)

@@ -13,6 +13,14 @@ Window {
 
     flags: Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
 
+    property bool hasAiResponse: {
+        if (!searchController.isAiMode) return false;
+        var q = searchController.query.trim();
+        if (!q.startsWith(">")) return false;
+        var prompt = q.substring(1).trim();
+        return !aiService.isRequesting && aiService.currentPrompt === prompt && aiService.lastResponse.length > 0;
+    }
+
     // Reposition window on target screen
     function reposition() {
         if (Screen.width > 0 && Screen.height > 0) {
@@ -81,14 +89,21 @@ Window {
     Item {
         id: cardContainer
         anchors.centerIn: parent
-        width: configService.cardWidth
+        width: (searchController.isAiMode && window.hasAiResponse) ? Math.max(configService.cardWidth, 780) : configService.cardWidth
         opacity: 1.0
         transform: Translate { id: containerTranslate; y: 0 }
         height: {
             if (searchController.resultCount === 0 && searchController.query.length === 0) {
                 return 76;
+            } else if (searchController.isAiMode && window.hasAiResponse) {
+                return 520; // Expanded Rich Markdown Reader
             } else if (searchController.resultCount === 0) {
                 return 180; // Empty state height
+            } else if (searchController.isAiMode) {
+                var aiContentH = (resultList.listView && resultList.listView.contentHeight > 0)
+                                 ? Math.min(420, Math.max(130, resultList.listView.contentHeight + 20))
+                                 : 140;
+                return 76 + 12 + aiContentH;
             } else {
                 var visibleItems = Math.min(configService.maxResults, searchController.resultCount);
                 return Math.min(76 + 12 + (configService.maxResults * 62), 76 + 12 + (visibleItems * 62));
@@ -97,9 +112,16 @@ Window {
 
         transformOrigin: Item.Center
 
+        Behavior on width {
+            NumberAnimation {
+                duration: 180
+                easing.type: Easing.OutCubic
+            }
+        }
+
         Behavior on height {
             NumberAnimation {
-                duration: 160
+                duration: 180
                 easing.type: Easing.OutCubic
             }
         }
@@ -108,11 +130,21 @@ Window {
         Rectangle {
             id: shadow
             anchors.fill: surface
-            anchors.margins: -10
-            radius: themeService.cornerRadius + 10
-            color: themeService.shadowColor
-            opacity: 0.6
+            anchors.margins: searchController.isAiMode ? -14 : -10
+            radius: themeService.cornerRadius + (searchController.isAiMode ? 14 : 10)
+            color: searchController.isAiMode ? configService.aiAccentColor : themeService.shadowColor
+            opacity: searchController.isAiMode ? 0.45 : 0.6
             z: 0
+
+            Behavior on color {
+                ColorAnimation { duration: 250 }
+            }
+            Behavior on opacity {
+                NumberAnimation { duration: 200 }
+            }
+            Behavior on anchors.margins {
+                NumberAnimation { duration: 200 }
+            }
         }
 
         // Main Translucent Card Surface
@@ -121,10 +153,17 @@ Window {
             anchors.fill: parent
             radius: themeService.cornerRadius
             color: themeService.backgroundColor
-            border.width: 1
-            border.color: themeService.borderColor
+            border.width: searchController.isAiMode ? 2 : 1
+            border.color: searchController.isAiMode ? configService.aiAccentColor : themeService.borderColor
             clip: true
             z: 1
+
+            Behavior on border.color {
+                ColorAnimation { duration: 220 }
+            }
+            Behavior on border.width {
+                NumberAnimation { duration: 150 }
+            }
 
             Column {
                 anchors.fill: parent
@@ -150,7 +189,12 @@ Window {
                     }
 
                     onEnterPressed: {
-                        searchController.executeSelected();
+                        if (window.hasAiResponse) {
+                            aiResponseView.copyToClipboard();
+                            searchController.hideWindow();
+                        } else {
+                            searchController.executeSelected();
+                        }
                     }
 
                     onSecondaryActionPressed: {
@@ -166,12 +210,20 @@ Window {
                     }
                 }
 
-                // Results List
+                // Results List (shown when not viewing full AI response)
                 ResultList {
                     id: resultList
                     width: parent.width
                     height: parent.height - searchBar.height
-                    visible: cardContainer.height > 76
+                    visible: cardContainer.height > 76 && !window.hasAiResponse
+                }
+
+                // Native Markdown AI Response View (shown when full AI response is active)
+                AiResponseView {
+                    id: aiResponseView
+                    width: parent.width
+                    height: parent.height - searchBar.height
+                    visible: cardContainer.height > 76 && window.hasAiResponse
                 }
             }
         }

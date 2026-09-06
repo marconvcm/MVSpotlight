@@ -21,47 +21,34 @@ Item {
         spacing: 16
         opacity: 1
 
-        // Spotlight Magnifying Glass Icon
+        // Spotlight Magnifying Glass Icon / AI Badge
         Item {
             width: 28
             height: 28
             anchors.verticalCenter: parent.verticalCenter
 
-            Canvas {
+            Image {
                 id: searchIcon
                 anchors.fill: parent
-                renderTarget: Canvas.Image
+                source: "qrc:/assets/icons/mvspotlight.svg"
+                sourceSize.width: 56
+                sourceSize.height: 56
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                visible: !searchController.isAiMode
+            }
 
-                onPaint: {
-                    var ctx = getContext("2d");
-                    ctx.reset();
-                    ctx.clearRect(0, 0, width, height);
+            Rectangle {
+                id: aiBadge
+                anchors.fill: parent
+                radius: 8
+                color: configService.aiAccentColor
+                visible: searchController.isAiMode
 
-                    var color = themeService.secondaryTextColor;
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 2.4;
-                    ctx.lineCap = "round";
-
-                    // Circle
-                    var radius = 7.5;
-                    var cx = 11.5;
-                    var cy = 11.5;
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, radius, 0, 2 * Math.PI, false);
-                    ctx.stroke();
-
-                    // Handle
-                    ctx.beginPath();
-                    ctx.moveTo(17.5, 17.5);
-                    ctx.lineTo(24.5, 24.5);
-                    ctx.stroke();
-                }
-
-                Connections {
-                    target: themeService
-                    function onThemeChanged() {
-                        searchIcon.requestPaint();
-                    }
+                Text {
+                    anchors.centerIn: parent
+                    text: "✨"
+                    font.pixelSize: 15
                 }
             }
         }
@@ -78,7 +65,7 @@ Item {
             font.weight: Font.Normal
             font.family: Qt.application.font.family
             color: themeService.textColor
-            selectionColor: themeService.accentColor
+            selectionColor: searchController.isAiMode ? configService.aiAccentColor : themeService.accentColor
             selectedTextColor: "#FFFFFF"
             selectByMouse: true
             clip: true
@@ -89,7 +76,7 @@ Item {
                 id: placeholder
                 anchors.fill: parent
                 verticalAlignment: Text.AlignVCenter
-                text: "Search with MVSpotlight..."
+                text: "Search with MVSpotlight... (or type > to ask AI)"
                 color: themeService.secondaryTextColor
                 font: input.font
                 visible: input.text.length === 0 && !input.inputMethodComposing

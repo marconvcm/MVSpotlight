@@ -6,6 +6,7 @@
         <file>components/ResultList.qml</file>
         <file>components/ResultItem.qml</file>
         <file>components/ResultIcon.qml</file>
+        <file>components/AiResponseView.qml</file>
         <file>components/AdwButton.qml</file>
         <file>components/AdwSwitch.qml</file>
         <file>components/AdwSlider.qml</file>

@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QString>
 #include <QList>
+#include <QTimer>
 #include <atomic>
 #include "SearchResultModel.h"
 #include "../providers/SearchProvider.h"
@@ -19,6 +20,7 @@ class SearchController : public QObject
     Q_PROPERTY(int resultCount READ resultCount NOTIFY resultCountChanged)
     Q_PROPERTY(bool windowVisible READ isWindowVisible WRITE setWindowVisible NOTIFY windowVisibleChanged)
     Q_PROPERTY(QVariantMap currentResult READ currentResult NOTIFY selectedIndexChanged)
+    Q_PROPERTY(bool isAiMode READ isAiMode NOTIFY isAiModeChanged)
 
 public:
     explicit SearchController(QObject *parent = nullptr);
@@ -28,6 +30,8 @@ public:
 
     QString query() const { return m_query; }
     void setQuery(const QString &query);
+
+    bool isAiMode() const { return m_query.trimmed().startsWith('>'); }
 
     int selectedIndex() const { return m_selectedIndex; }
     Q_INVOKABLE void setSelectedIndex(int index);
@@ -52,6 +56,7 @@ public:
     Q_INVOKABLE void toggleWindow();
     Q_INVOKABLE void reloadPlugins();
     Q_INVOKABLE void openPreferences();
+    Q_INVOKABLE void flushSearch();
 
     LuaPluginManager* pluginManager() { return m_luaPluginManager; }
 
@@ -64,9 +69,11 @@ signals:
     void resultLaunched();
     void windowDismissed();
     void openPreferencesRequested();
+    void isAiModeChanged();
 
 private slots:
     void onAsyncResultsReady(quint64 requestId, const QList<SearchResult> &results);
+    void onDebounceTimeout();
 
 private:
     void registerProvider(SearchProvider *provider);
@@ -84,6 +91,7 @@ private:
     QList<SearchProvider*> m_providers;
     SearchResultModel m_model;
     LuaPluginManager *m_luaPluginManager{nullptr};
+    QTimer m_debounceTimer;
 
     // Stored sync & async results for the active query
     QList<SearchResult> m_activeResults;

@@ -6,16 +6,20 @@ Item {
     property string text: ""
     property string iconText: ""
     property string styleType: "normal" // "normal", "suggested", "destructive", "flat", "pill"
+    property color accentColor: themeService.accentColor
 
     signal clicked()
 
-    implicitWidth: rowContent.width + (styleType === "pill" ? 28 : 22)
-    implicitHeight: 34
+    implicitWidth: Math.max(styleType === "pill" ? 36 : 28, rowContent.width + (styleType === "pill" ? 24 : 20))
+    implicitHeight: 32
+
+    width: implicitWidth
+    height: implicitHeight
 
     Rectangle {
         id: bg
         anchors.fill: parent
-        radius: root.styleType === "pill" ? 17 : 8
+        radius: root.styleType === "pill" ? Math.round(root.height / 2) : 8
         scale: mouseArea.pressed ? 0.98 : 1.0
 
         Behavior on scale {
@@ -31,9 +35,9 @@ Item {
                 return themeService.isDark ? "#2A2A2E" : "#E8E8EC";
             }
             if (root.styleType === "suggested") {
-                if (mouseArea.pressed) return Qt.darker(themeService.accentColor, 1.15);
-                if (mouseArea.containsMouse) return Qt.lighter(themeService.accentColor, 1.1);
-                return themeService.accentColor;
+                if (mouseArea.pressed) return Qt.darker(root.accentColor, 1.15);
+                if (mouseArea.containsMouse) return Qt.lighter(root.accentColor, 1.1);
+                return root.accentColor;
             }
             if (root.styleType === "destructive") {
                 if (mouseArea.pressed) return themeService.isDark ? "#481212" : "#F4D2D2";
@@ -45,7 +49,12 @@ Item {
                 if (mouseArea.containsMouse) return themeService.isDark ? "#12FFFFFF" : "#0D000000";
                 return "transparent";
             }
-            // "normal" / "pill"
+            if (root.styleType === "pill") {
+                if (mouseArea.pressed) return root.accentColor + "38";
+                if (mouseArea.containsMouse) return root.accentColor + "2C";
+                return root.accentColor + "20";
+            }
+            // "normal"
             if (mouseArea.pressed) return themeService.isDark ? "#424248" : "#D4D4D8";
             if (mouseArea.containsMouse) return themeService.isDark ? "#3B3B42" : "#E0E0E6";
             return themeService.isDark ? "#323238" : "#E8E8EE";
@@ -56,7 +65,10 @@ Item {
             if (root.styleType === "destructive") {
                 return themeService.isDark ? "#7A1C1C" : "#F5C2C2";
             }
-            return themeService.isDark ? "#14FFFFFF" : "#14000000";
+            if (root.styleType === "pill") {
+                return root.accentColor + "60";
+            }
+            return themeService.isDark ? "#1AFFFFFF" : "#1A000000";
         }
 
         Row {
@@ -67,14 +79,14 @@ Item {
             Text {
                 text: root.iconText
                 visible: root.iconText.length > 0
-                font.pixelSize: 13
+                font.pixelSize: 12
                 anchors.verticalCenter: parent.verticalCenter
             }
 
             Text {
                 text: root.text
                 font.pixelSize: 12
-                font.weight: (root.styleType === "suggested" || root.styleType === "destructive") ? Font.DemiBold : Font.Medium
+                font.weight: (root.styleType === "suggested" || root.styleType === "destructive" || root.styleType === "pill") ? Font.DemiBold : Font.Medium
                 anchors.verticalCenter: parent.verticalCenter
                 color: {
                     if (!root.enabled) {
@@ -85,6 +97,9 @@ Item {
                     }
                     if (root.styleType === "destructive") {
                         return themeService.isDark ? "#FFA0A0" : "#C01C28";
+                    }
+                    if (root.styleType === "pill") {
+                        return root.accentColor;
                     }
                     return themeService.textColor;
                 }

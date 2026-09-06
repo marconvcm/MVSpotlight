@@ -2,11 +2,15 @@
 #include "../services/ProcessService.h"
 #include "../services/ClipboardService.h"
 #include "../services/UsageHistory.h"
+#include "../services/ConfigService.h"
 #include <QStandardPaths>
 #include <QDir>
 #include <QDirIterator>
 #include <QFileInfo>
 #include <QMimeDatabase>
+#include <QDesktopServices>
+#include <QUrl>
+#include <QSet>
 #include <algorithm>
 
 FileProvider::FileProvider(QObject *parent)
@@ -33,10 +37,21 @@ QStringList FileProvider::searchDirectories() const
          << QDir::homePath() + "/Development"
          << QDir::homePath() + "/Workspace";
 
+    // Read configured workspace path from settings if provided
+    QString customWs = ConfigService::instance().getPluginSetting("org.mvspotlight.devtools", "workspace_path", "").toString().trimmed();
+    if (!customWs.isEmpty()) {
+        if (customWs.startsWith("~/")) {
+            customWs = QDir::homePath() + customWs.mid(1);
+        } else if (customWs == "~") {
+            customWs = QDir::homePath();
+        }
+        dirs << customWs;
+    }
+
     QStringList validDirs;
     for (const QString &d : dirs) {
         if (!d.isEmpty() && QDir(d).exists()) {
-            validDirs.append(d);
+            validDirs.append(QDir::cleanPath(d));
         }
     }
     validDirs.removeDuplicates();
@@ -70,8 +85,46 @@ void FileProvider::searchAsync(quint64 requestId, const QString &query)
 
     m_threadPool.start([this, requestId, q, dirs]() {
         QList<SearchResult> results;
+        QSet<QString> seenPaths;
         QString lowerQuery = q.toLower();
 
+        // 1. Check top-level search directories themselves
+        for (const QString &dirPath : dirs) {
+            if (m_latestRequestId.load() != requestId) {
+                return; // Cancelled
+            }
+
+            QFileInfo dirInfo(dirPath);
+            QString dirName = dirInfo.fileName();
+            QString lowerDirName = dirName.toLower();
+
+            if (lowerDirName.contains(lowerQuery)) {
+                double score = 75.0;
+                if (lowerDirName == lowerQuery) score = 95.0;
+                else if (lowerDirName.startsWith(lowerQuery)) score = 85.0;
+
+                score += UsageHistory::instance().frecencyBoost("file:" + dirInfo.absoluteFilePath());
+
+                SearchResult sr;
+                sr.setId("file:" + dirInfo.absoluteFilePath());
+                sr.setTitle(dirName);
+                sr.setSubtitle(dirInfo.absoluteFilePath());
+                sr.setIcon("folder");
+                sr.setScore(score);
+                sr.setType("Folder");
+                sr.setProvider("Files");
+                sr.setAction("open");
+                sr.setMetadataValue("filePath", dirInfo.absoluteFilePath());
+                sr.setMetadataValue("isDir", true);
+                sr.setSecondaryActionLabel("Copy Folder Path");
+                sr.setSecondaryAction("copy_path");
+
+                results.append(sr);
+                seenPaths.insert(dirInfo.absoluteFilePath());
+            }
+        }
+
+        // 2. Iterate inside directories
         for (const QString &dirPath : dirs) {
             if (m_latestRequestId.load() != requestId) {
                 return; // Cancelled
@@ -90,6 +143,10 @@ void FileProvider::searchAsync(quint64 requestId, const QString &query)
                 count++;
 
                 QFileInfo fi = it.fileInfo();
+                QString filePath = fi.absoluteFilePath();
+                if (seenPaths.contains(filePath))
+                    continue;
+
                 QString fileName = fi.fileName();
                 QString lowerName = fileName.toLower();
 
@@ -98,23 +155,24 @@ void FileProvider::searchAsync(quint64 requestId, const QString &query)
                     if (lowerName == lowerQuery) score = 90.0;
                     else if (lowerName.startsWith(lowerQuery)) score = 80.0;
 
-                    score += UsageHistory::instance().frecencyBoost("file:" + fi.absoluteFilePath());
+                    score += UsageHistory::instance().frecencyBoost("file:" + filePath);
 
                     SearchResult sr;
-                    sr.setId("file:" + fi.absoluteFilePath());
+                    sr.setId("file:" + filePath);
                     sr.setTitle(fileName);
                     sr.setSubtitle(fi.absolutePath());
-                    sr.setIcon(iconForFile(fi.absoluteFilePath(), fi.isDir()));
+                    sr.setIcon(iconForFile(filePath, fi.isDir()));
                     sr.setScore(score);
-                    sr.setType("File");
+                    sr.setType(fi.isDir() ? "Folder" : "File");
                     sr.setProvider("Files");
                     sr.setAction("open");
-                    sr.setMetadataValue("filePath", fi.absoluteFilePath());
+                    sr.setMetadataValue("filePath", filePath);
                     sr.setMetadataValue("isDir", fi.isDir());
-                    sr.setSecondaryActionLabel("Copy File Path");
+                    sr.setSecondaryActionLabel(fi.isDir() ? "Copy Folder Path" : "Copy File Path");
                     sr.setSecondaryAction("copy_path");
 
                     results.append(sr);
+                    seenPaths.insert(filePath);
 
                     if (results.size() >= 15)
                         break;
@@ -146,5 +204,12 @@ bool FileProvider::execute(const SearchResult &result, const QString &action)
     }
 
     UsageHistory::instance().recordLaunch(result.id());
-    return ProcessService::instance().launchDetached("gio", {"open", filePath});
+    bool ok = ProcessService::instance().launchDetached("gio", {"open", filePath});
+    if (!ok) {
+        ok = ProcessService::instance().launchDetached("xdg-open", {filePath});
+    }
+    if (!ok) {
+        ok = QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
+    }
+    return ok;
 }

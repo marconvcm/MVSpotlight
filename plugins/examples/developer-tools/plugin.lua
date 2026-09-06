@@ -40,6 +40,17 @@ launcher.register_command({
     end
 })
 
+local function expand_path(p)
+    if not p or p == "" then return "" end
+    local home = os.getenv("HOME") or "/home"
+    if p:sub(1, 2) == "~/" then
+        return home .. p:sub(2)
+    elseif p == "~" then
+        return home
+    end
+    return p
+end
+
 launcher.register_command({
     id = "devtools.open-android-sdk",
     title = "Open Android SDK Directory",
@@ -47,8 +58,13 @@ launcher.register_command({
     icon = "folder",
     keywords = { "android", "sdk", "android sdk", "sdk folder" },
     execute = function()
-        local home = os.getenv("HOME") or "/home"
-        launcher.open_file(home .. "/Android/Sdk")
+        local sdk_path = launcher.get_config("android_sdk_path", "~/Android/Sdk")
+        if not sdk_path or sdk_path == "" then sdk_path = "~/Android/Sdk" end
+        local full_path = expand_path(sdk_path)
+        local ok = launcher.open_file(full_path)
+        if not ok then
+            launcher.notify("Developer Tools", "Could not open Android SDK folder: " .. full_path, "dialog-warning")
+        end
     end
 })
 
@@ -59,7 +75,12 @@ launcher.register_command({
     icon = "folder-saved-search",
     keywords = { "workspace", "projects", "dev", "development", "code" },
     execute = function()
-        local home = os.getenv("HOME") or "/home"
-        launcher.open_file(home .. "/Workspace")
+        local ws_path = launcher.get_config("workspace_path", "~/Workspace")
+        if not ws_path or ws_path == "" then ws_path = "~/Workspace" end
+        local full_path = expand_path(ws_path)
+        local ok = launcher.open_file(full_path)
+        if not ok then
+            launcher.notify("Developer Tools", "Could not open workspace folder: " .. full_path, "dialog-warning")
+        end
     end
 })

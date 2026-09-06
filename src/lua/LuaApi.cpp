@@ -279,7 +279,15 @@ int LuaApi::lua_open_url(lua_State *L)
     }
 
     const char *urlStr = luaL_checkstring(L, 1);
-    bool ok = QDesktopServices::openUrl(QUrl(QString::fromUtf8(urlStr)));
+    QString url = QString::fromUtf8(urlStr).trimmed();
+
+    bool ok = ProcessService::instance().launchDetached("gio", {"open", url});
+    if (!ok) {
+        ok = ProcessService::instance().launchDetached("xdg-open", {url});
+    }
+    if (!ok) {
+        ok = QDesktopServices::openUrl(QUrl(url));
+    }
     lua_pushboolean(L, ok);
     return 1;
 }
@@ -294,7 +302,22 @@ int LuaApi::lua_open_file(lua_State *L)
     }
 
     const char *pathStr = luaL_checkstring(L, 1);
-    bool ok = QDesktopServices::openUrl(QUrl::fromLocalFile(QString::fromUtf8(pathStr)));
+    QString path = QString::fromUtf8(pathStr).trimmed();
+
+    if (path.startsWith("~/")) {
+        path = QDir::homePath() + path.mid(1);
+    } else if (path == "~") {
+        path = QDir::homePath();
+    }
+
+    bool ok = ProcessService::instance().launchDetached("gio", {"open", path});
+    if (!ok) {
+        ok = ProcessService::instance().launchDetached("xdg-open", {path});
+    }
+    if (!ok) {
+        ok = QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+    }
+
     lua_pushboolean(L, ok);
     return 1;
 }

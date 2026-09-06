@@ -5,15 +5,19 @@
 #include "../providers/SettingsProvider.h"
 #include "../providers/DeveloperCommandProvider.h"
 #include "../providers/FileProvider.h"
+#include "../providers/AiProvider.h"
 #include "../lua/LuaPluginManager.h"
 #include "../lua/LuaSearchProvider.h"
 #include "../services/UsageHistory.h"
+#include "../services/ConfigService.h"
 #include <algorithm>
 #include <QDebug>
 
 SearchController::SearchController(QObject *parent)
     : QObject(parent)
 {
+    m_debounceTimer.setSingleShot(true);
+    connect(&m_debounceTimer, &QTimer::timeout, this, &SearchController::onDebounceTimeout);
 }
 
 SearchController::~SearchController()
@@ -34,6 +38,14 @@ bool SearchController::init()
     registerProvider(devProvider);
 
     registerProvider(new FileProvider(this));
+
+    // Register AI Assistant provider
+    AiProvider *aiProvider = new AiProvider(this);
+    connect(aiProvider, &AiProvider::openPreferencesRequested, this, &SearchController::openPreferences);
+    connect(aiProvider, &AiProvider::requestRefresh, this, [this]() {
+        performSearch();
+    });
+    registerProvider(aiProvider);
 
     // Register Lua subsystem
     m_luaPluginManager = new LuaPluginManager(this);
@@ -59,9 +71,23 @@ void SearchController::setQuery(const QString &query)
     if (m_query == query)
         return;
 
+    bool wasAi = isAiMode();
     m_query = query;
     emit queryChanged();
-    performSearch();
+
+    if (wasAi != isAiMode()) {
+        emit isAiModeChanged();
+    }
+
+    int debounceMs = ConfigService::instance().searchDebounceMs();
+    if (m_query.isEmpty() || debounceMs <= 0) {
+        m_debounceTimer.stop();
+        performSearch();
+    } else {
+        m_isSearching = true;
+        emit isSearchingChanged();
+        m_debounceTimer.start(debounceMs);
+    }
 }
 
 void SearchController::setSelectedIndex(int index)
@@ -91,6 +117,7 @@ void SearchController::setWindowVisible(bool visible)
                 performSearch();
             }
         } else {
+            m_debounceTimer.stop();
             emit windowDismissed();
         }
     }
@@ -103,6 +130,8 @@ QVariantMap SearchController::currentResult() const
 
 void SearchController::performSearch()
 {
+    m_debounceTimer.stop();
+
     m_currentRequestId++;
     quint64 reqId = m_currentRequestId;
 
@@ -110,8 +139,12 @@ void SearchController::performSearch()
     m_isSearching = true;
     emit isSearchingChanged();
 
+    bool isAi = isAiMode();
+
     // Invoke synchronous search providers
     for (SearchProvider *provider : m_providers) {
+        if (isAi && provider->id() != "ai") continue;
+
         if (!provider->isAsync()) {
             QList<SearchResult> res = provider->search(m_query);
             m_activeResults.append(res);
@@ -125,6 +158,8 @@ void SearchController::performSearch()
     // Trigger async search providers
     bool hasAsync = false;
     for (SearchProvider *provider : m_providers) {
+        if (isAi && provider->id() != "ai") continue;
+
         if (provider->isAsync()) {
             hasAsync = true;
             provider->searchAsync(reqId, m_query);
@@ -184,6 +219,7 @@ void SearchController::updateModelResults()
 
 void SearchController::selectNext()
 {
+    flushSearch();
     if (m_model.rowCount() > 0) {
         setSelectedIndex((m_selectedIndex + 1) % m_model.rowCount());
     }
@@ -191,6 +227,7 @@ void SearchController::selectNext()
 
 void SearchController::selectPrevious()
 {
+    flushSearch();
     if (m_model.rowCount() > 0) {
         setSelectedIndex((m_selectedIndex - 1 + m_model.rowCount()) % m_model.rowCount());
     }
@@ -234,6 +271,10 @@ SearchProvider* SearchController::findProviderForResult(const SearchResult &resu
         for (SearchProvider *p : m_providers) {
             if (p->id() == "calc") return p;
         }
+    } else if (id.startsWith("ai:")) {
+        for (SearchProvider *p : m_providers) {
+            if (p->id() == "ai") return p;
+        }
     }
 
     // 3. Lua plugin metadata check
@@ -248,13 +289,25 @@ SearchProvider* SearchController::findProviderForResult(const SearchResult &resu
 
 void SearchController::executeIndex(int index)
 {
+    flushSearch();
     const SearchResult *res = m_model.resultAt(index);
     if (!res) return;
+
+    bool keepOpen = (res->action() == "ask_ai" || res->action() == "none");
+
+    if (res->action() == "ask_ai") {
+        QString prompt = res->metadataValue("prompt").toString();
+        if (!m_query.trimmed().startsWith('>')) {
+            setQuery("> " + prompt);
+        }
+    }
 
     SearchProvider *provider = findProviderForResult(*res);
     if (provider && provider->execute(*res)) {
         emit resultLaunched();
-        hideWindow();
+        if (!keepOpen) {
+            hideWindow();
+        }
         return;
     }
 
@@ -262,7 +315,9 @@ void SearchController::executeIndex(int index)
     for (SearchProvider *p : m_providers) {
         if (p != provider && p->execute(*res)) {
             emit resultLaunched();
-            hideWindow();
+            if (!keepOpen) {
+                hideWindow();
+            }
             return;
         }
     }
@@ -270,23 +325,29 @@ void SearchController::executeIndex(int index)
 
 void SearchController::executeSecondaryIndex(int index)
 {
+    flushSearch();
     const SearchResult *res = m_model.resultAt(index);
     if (!res) return;
 
     QString secAction = res->secondaryAction();
     QString action = secAction.isEmpty() ? QStringLiteral("secondary") : secAction;
+    bool keepOpen = (action == "ask_ai" || action == "none");
 
     SearchProvider *provider = findProviderForResult(*res);
     if (provider && provider->execute(*res, action)) {
         emit resultLaunched();
-        hideWindow();
+        if (!keepOpen) {
+            hideWindow();
+        }
         return;
     }
 
     for (SearchProvider *p : m_providers) {
         if (p != provider && p->execute(*res, action)) {
             emit resultLaunched();
-            hideWindow();
+            if (!keepOpen) {
+                hideWindow();
+            }
             return;
         }
     }
@@ -328,4 +389,17 @@ void SearchController::reloadPlugins()
 void SearchController::openPreferences()
 {
     emit openPreferencesRequested();
+}
+
+void SearchController::onDebounceTimeout()
+{
+    performSearch();
+}
+
+void SearchController::flushSearch()
+{
+    if (m_debounceTimer.isActive()) {
+        m_debounceTimer.stop();
+        performSearch();
+    }
 }

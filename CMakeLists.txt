@@ -47,6 +47,7 @@ set(PROJECT_SOURCES
     src/providers/CalculatorProvider.cpp
     src/providers/ActionProvider.cpp
     src/providers/DeveloperCommandProvider.cpp
+    src/providers/AiProvider.cpp
     src/lua/LuaPermissions.cpp
     src/lua/LuaEngine.cpp
     src/lua/LuaPlugin.cpp
@@ -61,6 +62,8 @@ set(PROJECT_SOURCES
     src/services/NotificationService.cpp
     src/services/ThemeService.cpp
     src/services/ConfigService.cpp
+    src/services/AiService.cpp
+    src/services/MarkdownRenderer.cpp
     src/services/IconImageProvider.cpp
     src/dbus/SpotlightAdaptor.cpp
     qml/qml.qrc
@@ -104,7 +107,7 @@ include(GNUInstallDirs)
 install(TARGETS mvspotlight DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES data/mvspotlight.desktop data/mvspotlight-preferences.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
 install(FILES data/autostart/mvspotlight.desktop DESTINATION /etc/xdg/autostart)
-install(FILES assets/icons/mvspotlight.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
+install(FILES assets/icons/mvspotlight.svg assets/icons/spotlight-qt.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
 install(DIRECTORY plugins/examples/ DESTINATION ${CMAKE_INSTALL_DATADIR}/mvspotlight/plugins)
 install(FILES data/systemd/mvspotlight.service DESTINATION lib/systemd/user)
 install(FILES LICENSE README.md DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mvspotlight)
@@ -123,6 +126,7 @@ add_executable(mvspotlight_tests
     src/providers/CalculatorProvider.cpp
     src/providers/ActionProvider.cpp
     src/providers/DeveloperCommandProvider.cpp
+    src/providers/AiProvider.cpp
     src/lua/LuaPermissions.cpp
     src/lua/LuaEngine.cpp
     src/lua/LuaPlugin.cpp
@@ -137,6 +141,8 @@ add_executable(mvspotlight_tests
     src/services/NotificationService.cpp
     src/services/ThemeService.cpp
     src/services/ConfigService.cpp
+    src/services/AiService.cpp
+    src/services/MarkdownRenderer.cpp
     src/services/IconImageProvider.cpp
     src/dbus/SpotlightAdaptor.cpp
 )

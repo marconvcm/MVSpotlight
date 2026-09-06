@@ -12,5 +12,21 @@
         "notifications",
         "filesystem.read",
         "application.launch"
+    ],
+    "settings": [
+        {
+            "key": "workspace_path",
+            "title": "Workspace Directory",
+            "type": "path",
+            "default": "~/Workspace",
+            "description": "Custom path to your primary projects and development workspace folder"
+        },
+        {
+            "key": "android_sdk_path",
+            "title": "Android SDK Directory",
+            "type": "path",
+            "default": "~/Android/Sdk",
+            "description": "Path to your Android SDK folder"
+        }
     ]
 }

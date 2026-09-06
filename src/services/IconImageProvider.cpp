@@ -36,9 +36,10 @@ QPixmap IconImageProvider::requestPixmap(const QString &id, QSize *size, const Q
 
     // Check embedded resource icons
     if (id == "mvspotlight" || id == "spotlight-qt") {
-        QPixmap pix(":/assets/icons/mvspotlight.svg");
+        QIcon icon(":/assets/icons/mvspotlight.svg");
+        QPixmap pix = icon.pixmap(width, height);
         if (!pix.isNull()) {
-            return pix.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            return pix;
         }
     }
 

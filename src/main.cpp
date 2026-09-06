@@ -18,7 +18,10 @@
 #include "lua/LuaPluginManager.h"
 #include "services/ThemeService.h"
 #include "services/ConfigService.h"
+#include "services/AiService.h"
 #include "services/UsageHistory.h"
+#include "services/ClipboardService.h"
+#include "services/NotificationService.h"
 #include "services/IconImageProvider.h"
 #include "dbus/SpotlightAdaptor.h"
 
@@ -31,7 +34,11 @@ int main(int argc, char *argv[])
     app.setApplicationName("mvspotlight");
     app.setOrganizationName("MVSpotlight");
     app.setApplicationVersion("1.0.0");
-    app.setWindowIcon(QIcon::fromTheme("mvspotlight", QIcon::fromTheme("system-search")));
+    QIcon appIcon(":/assets/icons/mvspotlight.svg");
+    if (appIcon.isNull()) {
+        appIcon = QIcon::fromTheme("mvspotlight", QIcon::fromTheme("system-search"));
+    }
+    app.setWindowIcon(appIcon);
     app.setQuitOnLastWindowClosed(false);
 
     QCommandLineParser parser;
@@ -157,7 +164,10 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("searchController", &controller);
     engine.rootContext()->setContextProperty("themeService", &ThemeService::instance());
     engine.rootContext()->setContextProperty("configService", &ConfigService::instance());
+    engine.rootContext()->setContextProperty("aiService", &AiService::instance());
     engine.rootContext()->setContextProperty("usageHistory", &UsageHistory::instance());
+    engine.rootContext()->setContextProperty("clipboardService", &ClipboardService::instance());
+    engine.rootContext()->setContextProperty("notificationService", &NotificationService::instance());
     engine.rootContext()->setContextProperty("pluginManager", controller.pluginManager());
 
     auto getRootWindow = [&engine]() -> QQuickWindow* {

@@ -15,5 +15,5 @@ Actions=Preferences;
 Name=MVSpotlight Preferences
 Comment=Configure MVSpotlight appearance, themes, and plugins
 Exec=mvspotlight --preferences
-Icon=preferences-system
+Icon=mvspotlight
 
