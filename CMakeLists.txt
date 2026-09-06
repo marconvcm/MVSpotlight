@@ -174,6 +174,7 @@ target_link_libraries(mvspotlight_tests PRIVATE
 )
 
 add_test(NAME mvspotlight_tests COMMAND mvspotlight_tests)
+set_tests_properties(mvspotlight_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # ------------------------------------------------------------------------------
 # CPack Packaging Configuration (RPM, TGZ)

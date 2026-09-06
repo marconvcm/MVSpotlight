@@ -126,7 +126,11 @@ bool DeveloperCommandProvider::execute(const SearchResult &result, const QString
     }
 
     if (act == "open_logs" || action == "copy_log_path") {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
         QString stateDir = QStandardPaths::writableLocation(QStandardPaths::GenericStateLocation);
+#else
+        QString stateDir = QDir::homePath() + "/.local/state";
+#endif
         if (stateDir.isEmpty()) stateDir = QDir::homePath() + "/.local/state";
         QString logPath = stateDir + "/mvspotlight/launcher.log";
 

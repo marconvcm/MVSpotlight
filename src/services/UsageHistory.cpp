@@ -27,7 +27,11 @@ UsageHistory::~UsageHistory()
 
 QString UsageHistory::storageFilePath() const
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
     QString stateDir = QStandardPaths::writableLocation(QStandardPaths::GenericStateLocation);
+#else
+    QString stateDir = QDir::homePath() + "/.local/state";
+#endif
     if (stateDir.isEmpty())
         stateDir = QDir::homePath() + "/.local/state";
 

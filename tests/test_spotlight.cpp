@@ -19,7 +19,7 @@ class TestMVSpotlight : public QObject
 {
     Q_OBJECT
 
-private slots:
+    void initTestCase();
     void testCalculatorValid();
     void testCalculatorInvalid();
     void testUsageHistoryFrecency();
@@ -43,6 +43,11 @@ private slots:
     void testAiConfigService();
     void testMarkdownRendering();
 };
+
+void TestMVSpotlight::initTestCase()
+{
+    qputenv("QT_QPA_PLATFORM", "offscreen");
+}
 
 void TestMVSpotlight::testCalculatorValid()
 {

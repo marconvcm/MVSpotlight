@@ -43,7 +43,11 @@ LuaApi::LuaApi(LuaPluginManager *manager, QObject *parent)
 
 void LuaApi::logToFile(const QString &pluginId, const QString &message)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
     QString stateDir = QStandardPaths::writableLocation(QStandardPaths::GenericStateLocation);
+#else
+    QString stateDir = QDir::homePath() + "/.local/state";
+#endif
     if (stateDir.isEmpty()) stateDir = QDir::homePath() + "/.local/state";
     QDir().mkpath(stateDir + "/mvspotlight");
     QString logPath = stateDir + "/mvspotlight/launcher.log";
