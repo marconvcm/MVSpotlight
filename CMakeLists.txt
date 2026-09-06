@@ -177,6 +177,59 @@ add_test(NAME mvspotlight_tests COMMAND mvspotlight_tests)
 set_tests_properties(mvspotlight_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # ------------------------------------------------------------------------------
+# Screenshot Capture Tool (Headless offscreen virtual capture)
+# ------------------------------------------------------------------------------
+set(CAPTURE_SOURCES
+    tools/capture_screenshots.cpp
+    src/core/SearchResult.cpp
+    src/core/SearchResultModel.cpp
+    src/core/SearchController.cpp
+    src/providers/SearchProvider.cpp
+    src/providers/ApplicationProvider.cpp
+    src/providers/FileProvider.cpp
+    src/providers/SettingsProvider.cpp
+    src/providers/CalculatorProvider.cpp
+    src/providers/ActionProvider.cpp
+    src/providers/DeveloperCommandProvider.cpp
+    src/providers/AiProvider.cpp
+    src/lua/LuaPermissions.cpp
+    src/lua/LuaEngine.cpp
+    src/lua/LuaPlugin.cpp
+    src/lua/LuaPluginManager.cpp
+    src/lua/LuaSearchProvider.cpp
+    src/lua/LuaApi.cpp
+    src/services/DesktopEntryService.cpp
+    src/services/UsageHistory.cpp
+    src/services/SystemActions.cpp
+    src/services/ProcessService.cpp
+    src/services/ClipboardService.cpp
+    src/services/NotificationService.cpp
+    src/services/ThemeService.cpp
+    src/services/ConfigService.cpp
+    src/services/AiService.cpp
+    src/services/MarkdownRenderer.cpp
+    src/services/IconImageProvider.cpp
+    src/dbus/SpotlightAdaptor.cpp
+    qml/qml.qrc
+    assets/assets.qrc
+)
+
+add_executable(mvspotlight_capture ${CAPTURE_SOURCES})
+target_include_directories(mvspotlight_capture PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/providers
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/lua
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/services
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dbus
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/lua-5.4.8/src
+)
+target_link_libraries(mvspotlight_capture PRIVATE
+    Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2
+    Qt6::DBus Qt6::Network Qt6::Concurrent Qt6::Svg lua54 m dl
+)
+
+# ------------------------------------------------------------------------------
 # CPack Packaging Configuration (RPM, TGZ)
 # ------------------------------------------------------------------------------
 set(CPACK_PACKAGE_NAME "mvspotlight")

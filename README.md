@@ -1,213 +1,176 @@
-# MVSpotlight: macOS Spotlight-Inspired Launcher for GNOME 50
+<div align="center">
 
-A high-performance, keyboard-first desktop launcher and command palette for **GNOME 50 on Linux**, built with **Qt 6, Qt Quick / QML, C++, and embedded Lua 5.4**. Designed from the ground up for a pure **Wayland** environment with zero legacy X11 dependencies.
+<img src="assets/icons/mvspotlight.svg" width="128" height="128" alt="MVSpotlight Icon" />
 
-![MVSpotlight Banner](assets/icons/mvspotlight.svg)
+# MVSpotlight
 
----
+### macOS Spotlight-Inspired Desktop Launcher & AI Command Palette for GNOME 50 on Wayland
 
-## Highlights & Features
+[![Release](https://img.shields.io/github/v/release/marconvcm/MVSpotlight?color=3584e4&style=for-the-badge&logo=github)](https://github.com/marconvcm/MVSpotlight/releases/latest)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/marconvcm/MVSpotlight/package.yml?branch=main&label=CI%20Build&style=for-the-badge&logo=githubactions)](https://github.com/marconvcm/MVSpotlight/actions)
+[![License](https://img.shields.io/badge/License-MIT-emerald?style=for-the-badge)](LICENSE)
+[![Platform](https://img.shields.io/badge/Desktop-GNOME%2050%20%7C%20Wayland-purple?style=for-the-badge&logo=gnome)](https://www.gnome.org)
+[![Toolkit](https://img.shields.io/badge/Built%20With-Qt%206%20%26%20C%2B%2B20-41CD52?style=for-the-badge&logo=qt)](https://www.qt.io)
 
-- ⚡ **Instantaneous Interaction**: Runs as a persistent background daemon; activates in perceived $<50\text{ms}$ upon pressing `Alt + Space`.
-- 🪟 **Frameless Translucent Surface**: Spotlight-inspired floating panel with smooth rounded corners ($22\text{px}$), broad soft shadows, subtle 1px border, and dynamic animated height ($76\text{px} \rightarrow 620\text{px}$).
-- 🤖 **Integrated AI Assistant & Multi-LLM Chat**:
-  - Type `>` followed by your question (e.g. `> explain rust borrow checker`, `> write a python script for resizing images`) to invoke the AI assistant directly from the search bar.
-  - Streaming responses rendered inside a sleek, full-width Markdown view with formatted code blocks, headers, bullet lists, raw markdown toggle, and one-click copy to clipboard.
-  - Out-of-the-box support for **Google Gemini**, **OpenAI**, **Anthropic Claude**, **Ollama** (offline local LLMs), and **Custom OpenAI-compatible endpoints**.
-- 🖥️ **Wayland Native & Multi-Monitor**: Automatically centers on the active monitor containing the mouse pointer or focused window at $26\%$ from the top of the display.
-- 🎨 **Adaptive GNOME Theme**: Automatically follows GNOME's dark / light mode preference in real-time (`org.gnome.desktop.interface color-scheme`).
-- 🔍 **Unified Search & Ranking Pipeline**:
-  - Exact, prefix, word-prefix, substring, and fuzzy matching.
-  - Configurable keystroke debouncing ($0\text{ms} - 300\text{ms}$) with instant synchronous flushing on arrow navigation or Enter.
-  - Usage frecency weighting (`~/.local/state/mvspotlight/history.json`) promoting frequently and recently launched items.
-  - Cancellation tokens discarding stale asynchronous results when typing quickly.
-- 🚀 **Native Search Providers**:
-  - **AI Assistant**: Direct AI query card and interactive Markdown response view.
-  - **Applications**: Fast indexed XDG `.desktop` parser supporting names, generic names, keywords, and terminals.
-  - **GNOME Settings**: Direct access to Wi-Fi, Bluetooth, Displays, Sound, Appearance, Power, Privacy, and more.
-  - **Calculator**: Safe mathematical expression evaluator (`22 * 5`, `1024 / 8`, `(25 + 5) * 2`, `sqrt(144)`) with instant copy on Enter.
-  - **Quick Actions**: Session management (Lock, Log Out, Suspend, Restart, Shut Down, Open Terminal, Empty Trash).
-  - **Files & Workspaces**: Asynchronous search of files, folders, documents, downloads, desktop, and project workspaces (`~/Workspace`, `~/Development`, or custom paths).
-- 🧩 **First-Class Lua 5.4 Plugin Runtime**:
-  - Embedded Lua runtime with stable C++ API (`launcher`).
-  - Manifest metadata (`manifest.json`) and lightweight permissions model (`process.execute`, `network`, `notifications`, `clipboard.write`).
-  - Execution watchdog (~100ms soft timeout) and instruction hooks preventing UI freezes.
-  - Automatic error isolation and recovery without crashing the launcher.
-  - Live hot-reloading on save (`QFileSystemWatcher`) and developer commands (`:plugins`, `:reload`, `:logs`, `:debug`).
-- 📦 **8 Ready-to-Use Example Plugins**:
-  - **Weather**: Live global weather conditions and forecasts (`weather`, `weather tokyo`, `weather london`, `weather sao paulo`, `clima sp`).
-  - **Currency Exchange**: Real-time currency conversions (`299brl to usd`, `299 brl in usd`, `$50 to eur`, `100 eur to brl`, `5000 jpy to usd`).
-  - **Developer Tools**: `Kill Gradle Daemons`, `Restart ADB`, `Open Android SDK`, `Open Projects Workspace` (with configurable workspace path).
-  - **Docker**: Search and manage running & stopped containers, start/stop with Enter, copy container IDs with Ctrl+Enter.
-  - **Git**: Copy active Git branch, view git status.
-  - **Web Search**: `g <query>`, `google <query>`, `gh <query>`, `ddg <query>`, `wiki <query>`.
-  - **UUID Generator**: Typing `uuid` generates random v4 UUIDs, Enter copies to clipboard.
-  - **Timestamp Converter**: Typing `unix 1788500000` converts epochs to human-readable UTC/local times.
+<p align="center">
+  <b>A keyboard-first desktop launcher, application palette, and inline AI assistant designed from the ground up for modern Linux.</b><br/>
+  Zero legacy X11 baggage • Sub-50ms activation • Native Libadwaita styling • Embedded Lua 5.4 runtime
+</p>
+
+<br/>
+
+<img src="assets/screenshots/ai_chat.png" alt="MVSpotlight AI Assistant Showcase" width="900" style="border-radius: 12px;" />
+
+</div>
 
 ---
 
-## Keyboard Controls
+## ⚡ Quick Start & Installation
 
-| Shortcut | Action |
-|---|---|
-| `Alt + Space` | Toggle MVSpotlight launcher |
-| `Ctrl + ,` | Open MVSpotlight Preferences |
-| `>` or `> <prompt>` | Trigger AI Assistant mode |
-| `Down Arrow` / `Tab` | Select next result |
-| `Up Arrow` / `Shift + Tab` | Select previous result |
-| `Enter` | Execute selected action / submit AI prompt |
-| `Ctrl + Enter` | Trigger secondary action (e.g. Copy ID / Reveal in Files) |
-| `Escape` | Clear query (if text present) or dismiss launcher / return from AI view |
-| `:settings` / `preferences` | Open Preferences panel directly from search |
-| `:plugins` | Open plugin management panel |
-| `:reload` | Hot-reload all Lua plugins |
-| `:theme` | Toggle light/dark palette |
-| `:logs` | View persistent launcher logs |
-
----
-
-## Integrated AI Assistant
-
-MVSpotlight integrates a desktop-native AI assistant directly into your workflow without needing a web browser or separate heavy desktop app:
-
-### Using the Assistant
-1. Press `Alt + Space` to open MVSpotlight.
-2. Type `>` followed by your question:
-   ```
-   > what is the difference between mutex and semaphore?
-   ```
-3. Press `Enter`. MVSpotlight streams the response into an embedded Adwaita-styled Markdown card.
-4. **Action Controls**:
-   - **Copy to Clipboard**: Quick copy of the entire formatted response.
-   - **Rich Render / Raw Markdown**: Toggle between formatted typography and raw markdown syntax.
-   - **Close / Back**: Press `Escape` or click the back icon to resume searching.
-
-### Supported Providers
-- **Google Gemini**: Uses `gemini-2.0-flash` by default (fast and responsive).
-- **OpenAI**: Uses `gpt-4o-mini` or `gpt-4o`.
-- **Anthropic Claude**: Uses `claude-3-5-sonnet-20241022`.
-- **Ollama (Local Offline LLM)**: Connects to `http://localhost:11434` with models like `llama3.2` or `mistral` with 100% data privacy.
-- **Custom OpenAI-Compatible**: Connects to any OpenAI-compatible API gateway (e.g., LocalAI, vLLM, DeepSeek).
-
----
-
-## Preferences & Customization Panel
-
-MVSpotlight includes a built-in, Wayland-native **Preferences Window** to customize your look & feel, configure AI credentials, and manage plugins.
-
-### Opening Preferences:
-- **Gear Icon**: Click the ⚙️ button in the search bar.
-- **Keyboard Shortcut**: Press `Ctrl + ,` while the launcher is open.
-- **Search Command**: Type `settings`, `preferences`, or `:settings` and press `Enter`.
-- **CLI / D-Bus**: Run `mvspotlight --preferences` (or `-p`).
-- **GNOME App Grid**: Click "MVSpotlight Preferences" in your desktop application launcher.
-
-### Configuration Tabs:
-1. 🎨 **Appearance**:
-   - **Theme Mode**: Auto (follows GNOME system dark/light preference), Dark, or Light.
-   - **Accent Palette**: 9 vibrant presets (macOS Blue, Emerald Green, Electric Indigo, Royal Purple, Coral Rose, Amber Orange, Cyan Teal, Ruby Crimson, Graphite) plus custom HEX input with live color indicator.
-   - **Surface Opacity**: Adjustable translucent glassmorphism (65% to 100%).
-   - **Corner Radius**: From sharp-modern (10px) to ultra-curved macOS style (36px).
-   - **Card Width**: From compact (540px) to expansive widescreen (920px).
-   - **Font Scaling**: 80% to 135% for high-DPI displays.
-   - **Interactive Live Preview**: Real-time mock Spotlight card reflecting all adjustments instantly before closing.
-2. 🤖 **AI Assistant**:
-   - **Provider Selection**: Gemini, OpenAI, Claude, Ollama, or Custom.
-   - **API Key Field**: Masked entry with toggle visibility button.
-   - **Model Selector**: Auto-populated defaults with editable custom model strings.
-   - **Endpoint URL**: Custom API URL for local or self-hosted LLM endpoints.
-   - **System Prompt**: Fine-tune the assistant's personality and instructions.
-   - **Temperature & Max Tokens**: Adjust creativity and response length.
-   - **AI Accent Color**: Custom badge and highlight color for AI responses.
-   - **Test Connection**: Instant connectivity test verifying API keys and model reachability.
-3. 🧩 **Plugins**:
-   - **Enable / Disable Toggles**: Enable or disable any plugin on the fly with automatic provider reloading.
-   - **Security Inspection**: Displays all requested sandbox permissions per plugin (`network`, `process.execute`, etc.).
-   - **Schema-Driven Settings**: Interactive fields (text inputs, directory selectors, masked passwords, dropdown choices, and toggle switches) dynamically generated from `manifest.json`.
-   - **Plugin Folder**: Quick button to open the plugin directory in GNOME Files.
-4. ⚙️ **General**:
-   - **Keystroke Debounce**: Configurable search debounce delay (0ms to 300ms, default 100ms) preventing unnecessary queries while typing.
-   - **Max Results Limit**: 3 to 15 items.
-   - **Clear Query on Dismiss**: Option to reset or preserve search text on close.
-   - **Frecency History**: View search history statistics with a one-click "Clear Search History" button.
-5. ℹ️ **About**:
-   - App version, architecture details, and documentation links.
-
----
-
-### Declaring Configurable Plugin Settings
-
-Plugins can declare a `"settings"` schema array in their `manifest.json`. MVSpotlight automatically renders matching UI controls in the Preferences panel and persists values in `~/.config/mvspotlight/settings.ini`:
-
-```json
-{
-    "id": "org.mvspotlight.weather",
-    "name": "Weather",
-    "version": "1.0.0",
-    "settings": [
-        {
-            "key": "default_city",
-            "title": "Default Location / City",
-            "type": "string",
-            "default": "",
-            "description": "City to query when typing 'weather' alone"
-        },
-        {
-            "key": "temperature_unit",
-            "title": "Preferred Temperature Unit",
-            "type": "choice",
-            "choices": ["c", "f"],
-            "choiceLabels": ["Celsius (°C)", "Fahrenheit (°F)"],
-            "default": "c"
-        },
-        {
-            "key": "show_forecast",
-            "title": "Show High/Low Forecast Card",
-            "type": "boolean",
-            "default": true
-        }
-    ]
-}
-```
-
-In your `plugin.lua`, read configuration values anytime using `launcher.get_config`:
-
-```lua
-local city = launcher.get_config("default_city", "")
-local unit = launcher.get_config("temperature_unit", "c")
-local forecast_enabled = launcher.get_config("show_forecast", true)
-```
-
----
-
-## Build Prerequisites (Fedora Linux / GNOME 50)
-
-Install required build tools and Qt 6 packages:
-
+### Fedora / RHEL (RPM)
 ```bash
-sudo dnf install -y \
-    cmake \
-    gcc-c++ \
-    qt6-qtbase-devel \
-    qt6-qtdeclarative-devel \
-    qt6-qtsvg-devel
+# Download latest RPM from GitHub Releases
+curl -LO https://github.com/marconvcm/MVSpotlight/releases/latest/download/mvspotlight-1.0.0-1.fc44.x86_64.rpm
+sudo dnf install ./mvspotlight-1.0.0-1.fc44.x86_64.rpm
 ```
 
-*Note: Lua 5.4 is bundled and compiled as a self-contained static library within `3rdparty/lua-5.4.8/`, ensuring zero external Lua package dependency issues across Linux distributions.*
+### Debian / Ubuntu (DEB)
+```bash
+# Download latest DEB from GitHub Releases
+curl -LO https://github.com/marconvcm/MVSpotlight/releases/latest/download/mvspotlight-1.0.0-Linux.deb
+sudo apt install ./mvspotlight-1.0.0-Linux.deb
+```
+
+### Generic Linux (Portable Archive)
+```bash
+# Download standalone portable package
+curl -LO https://github.com/marconvcm/MVSpotlight/releases/latest/download/mvspotlight-1.0.0-Linux.tar.gz
+tar -xzf mvspotlight-1.0.0-Linux.tar.gz
+./bin/mvspotlight --daemon
+```
 
 ---
 
-## Building from Source
+## 🌟 Visual Showcase
 
+<div align="center">
+
+### 🔍 Desktop Search & GNOME Integration
+*Instantaneous fuzzy search across installed apps, GNOME Settings, and local files.*
+
+<img src="assets/screenshots/search_settings.png" alt="GNOME Settings Search" width="780" />
+
+<br/><br/>
+
+### 🤖 Inline Multi-LLM Assistant
+*Type `>` followed by your question. Streams syntax-highlighted Markdown directly inside the palette.*
+
+<img src="assets/screenshots/ai_chat.png" alt="AI Chat Mode" width="780" />
+
+<br/><br/>
+
+### 🎨 Wayland-Native Preferences & Live Customization
+*Tailor your glassmorphism opacity, corner radius, and accent colors with real-time feedback.*
+
+<img src="assets/screenshots/preferences_appearance.png" alt="Preferences Appearance Tab" width="780" />
+
+<br/><br/>
+
+### ⚙️ Multi-Model AI Engine Settings
+*Plug in Google Gemini, OpenAI, Claude, or local offline LLMs via Ollama with connection testing.*
+
+<img src="assets/screenshots/preferences_ai.png" alt="Preferences AI Configuration Tab" width="780" />
+
+<br/><br/>
+
+### 🧩 Lua 5.4 Plugin Architecture & Schema Controls
+*Manage plugins, inspect sandbox permissions, and tweak dynamically rendered settings.*
+
+<img src="assets/screenshots/preferences_plugins.png" alt="Preferences Plugins Tab" width="780" />
+
+<br/><br/>
+
+### 💱 Real-Time Currency & Calculator Math
+*Instant financial conversions with live inverse rates and safe mathematical expressions.*
+
+<p align="center">
+  <img src="assets/screenshots/search_currency.png" alt="Currency Plugin" width="48%" />
+  &nbsp;
+  <img src="assets/screenshots/search_calculator.png" alt="Calculator" width="48%" />
+</p>
+
+</div>
+
+---
+
+## 🚀 Key Highlights
+
+| Feature | Description |
+|---|---|
+| ⚡ **Instantaneous Interaction** | Runs as an ultra-light background daemon; toggles in $<50\text{ms}$ upon pressing `Alt + Space`. |
+| 🪟 **Frameless Floating Panel** | macOS Spotlight-inspired floating card with soft drop shadows, subtle borders, and dynamic animated height. |
+| 🤖 **Inline AI Assistant** | Instant answers via `>` prefix. Supports **Google Gemini**, **OpenAI**, **Anthropic Claude**, and local **Ollama** models. |
+| 🖥️ **Wayland Native & Multi-Monitor** | Follows the active mouse pointer or focused display window at $26\%$ from display top. Zero X11 dependencies. |
+| 🎨 **Adaptive Theme Engine** | Tracks GNOME color scheme preferences in real-time (`dark` / `light`) with 9 vibrant Adwaita accent palettes. |
+| 🔍 **Frecency Ranking Pipeline** | Exact, prefix, substring, and fuzzy matching weighted by usage frecency (`~/.local/state/mvspotlight/history.json`). |
+| 🧩 **Sandboxed Lua Plugins** | Hot-reloading Lua 5.4 plugins with watchdog timers and declarative permissions (`network`, `clipboard.write`). |
+
+---
+
+## ⌨️ Keyboard Controls Cheatsheet
+
+| Shortcut | Context | Action |
+|---|---|---|
+| `Alt + Space` | Global | Toggle MVSpotlight launcher visibility |
+| `Ctrl + ,` | Launcher | Open Preferences Window |
+| `>` or `> <prompt>` | Search Bar | Activate AI Assistant chat mode |
+| `Down` / `Tab` | Search Results | Navigate to next item |
+| `Up` / `Shift + Tab` | Search Results | Navigate to previous item |
+| `Enter` | Search Results | Execute primary action / Submit AI prompt |
+| `Ctrl + Enter` | Search Results | Execute secondary action (Copy ID, reveal in Files) |
+| `Esc` | Launcher / AI | Clear query, return from AI response, or dismiss |
+| `:settings` / `preferences` | Search Bar | Open Preferences directly from query |
+| `:plugins` | Search Bar | Open Plugin Management |
+| `:reload` | Search Bar | Hot-reload all Lua plugins from disk |
+| `:theme` | Search Bar | Toggle dark / light color scheme |
+
+---
+
+## 📦 Bundled Lua Plugins
+
+MVSpotlight comes pre-packaged with 8 extensible Lua 5.4 plugins:
+
+- 🌤️ **Weather**: Live conditions and multi-day forecasts (`weather`, `weather tokyo`, `weather london`, `clima sp`).
+- 💱 **Currency Exchange**: Real-time conversions with inverse rates (`100 eur to usd`, `299 brl in usd`, `$50 to eur`).
+- 🛠️ **Developer Tools**: `Kill Gradle Daemons`, `Restart ADB`, `Open Android SDK`, `Open Projects Workspace`.
+- 🐳 **Docker**: Manage running/stopped containers, start/stop on Enter, copy IDs with Ctrl+Enter.
+- 🐙 **Git & GitHub**: Copy current branch name, view repo status, jump to pull requests.
+- 🌐 **Web Search**: Quick browser redirects (`g <query>`, `gh <query>`, `ddg <query>`, `wiki <query>`).
+- 🔑 **UUID Generator**: Type `uuid` to generate random v4 UUIDs; Enter copies to clipboard.
+- ⏱️ **Timestamp Converter**: Type `unix 1788500000` to convert epoch timestamps to UTC and local human time.
+
+---
+
+## 🛠️ Building from Source
+
+### Fedora / RHEL
+```bash
+sudo dnf install -y cmake gcc-c++ qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtsvg-devel
+```
+
+### Debian / Ubuntu
+```bash
+sudo apt install -y cmake build-essential qt6-base-dev qt6-declarative-dev libqt6svg6-dev libgl1-mesa-dev
+```
+
+### Compilation
 ```bash
 # Clone the repository
 git clone https://github.com/marconvcm/MVSpotlight.git
 cd MVSpotlight
 
-# Configure CMake
+# Configure and compile
 cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-
-# Compile (parallel build)
 cmake --build build -j$(nproc)
 
 # Run test suite
@@ -216,118 +179,45 @@ ctest --test-dir build --output-on-failure
 
 ---
 
-## Installation & GNOME 50 Setup
+## 📸 Capturing Screenshots Offscreen
 
-### One-Step Installation Script:
-```bash
-./scripts/install.sh
-```
-This script:
-1. Compiles the release binary (`mvspotlight`) if needed.
-2. Installs `mvspotlight` to `~/.local/bin/mvspotlight` and creates a `spotlight-qt` backward-compatibility symlink.
-3. Installs high-resolution SVG icons to `~/.local/share/icons/hicolor/scalable/apps/`.
-4. Installs desktop entry to `~/.local/share/applications/mvspotlight.desktop`.
-5. Installs autostart configuration to `~/.config/autostart/mvspotlight.desktop`.
-6. Installs example plugins to `~/.local/share/mvspotlight/plugins/`.
-7. Automatically configures the GNOME 50 `Alt + Space` custom shortcut using `gsettings`.
-8. Configures and starts the persistent `systemd --user` unit (`mvspotlight.service`).
+MVSpotlight includes a built-in headless capture tool that renders all showcase images without disturbing your desktop session:
 
-### Uninstallation:
 ```bash
-./scripts/uninstall.sh
+# Compile capture utility
+cmake --build build --target mvspotlight_capture -j$(nproc)
+
+# Generate 2x Retina PNGs into assets/screenshots
+./build/mvspotlight_capture assets/screenshots
 ```
 
 ---
 
-## CLI & D-Bus IPC
-
-When `mvspotlight` is already running in the background, secondary invocations communicate directly with the daemon via D-Bus (`org.mvspotlight.Launcher`):
-
-```bash
-# Toggle launcher visibility (bound to Alt+Space)
-mvspotlight --toggle
-
-# Show launcher with pre-filled search query
-mvspotlight --search "firefox"
-
-# Show or hide explicitly
-mvspotlight --show
-mvspotlight --hide
-
-# Open Preferences Window
-mvspotlight --preferences
-
-# Hot-reload all Lua plugins
-mvspotlight --reload-plugins
-
-# List installed plugins from CLI
-mvspotlight --list-plugins
-
-# Launch background daemon directly
-mvspotlight --daemon
-```
-
----
-
-## Lua Plugin Development
-
-Developing plugins is simple and requires only 20–30 lines of Lua.
-
-Example: **Developer Tools** command (`~/.local/share/mvspotlight/plugins/my-plugin/plugin.lua`):
-
-```lua
-launcher.register_command({
-    id = "devtools.kill-gradle",
-    title = "Kill Gradle Daemons",
-    subtitle = "Stop all background Gradle processes",
-    icon = "utilities-terminal",
-    keywords = { "gradle", "kill gradle" },
-    execute = function()
-        launcher.process.run_async({
-            command = "pkill",
-            arguments = { "-f", "gradle.*daemon" },
-            on_complete = function(res)
-                launcher.notify("Developer Tools", "Gradle daemons stopped", "utilities-terminal")
-            end
-        })
-    end
-})
-```
-
-For complete API documentation and guides, see:
-- 📖 [Architecture & Technical Design](docs/architecture.md)
-- 🔌 [Lua Plugin API Reference](docs/plugin-api.md)
-- 🛠️ [Lua Plugin Development Tutorial](docs/plugin-development.md)
-
----
-
-## Project Structure
+## 🗺️ Project Architecture
 
 ```
-.
-├── CMakeLists.txt              # CMake build configuration (mvspotlight)
-├── 3rdparty/                   # Embedded Lua 5.4.8 runtime
+MVSpotlight
+├── CMakeLists.txt              # CMake build configuration & CPack definitions (RPM, DEB, TGZ)
+├── 3rdparty/lua-5.4.8/         # Embedded Lua 5.4 runtime (static zero-dependency build)
 ├── src/
-│   ├── main.cpp                # Application entry, CLI parser & Wayland window coordinator
+│   ├── main.cpp                # App entrypoint, CLI arguments parser & Wayland window coordinator
 │   ├── core/                   # SearchController, SearchResult, SearchResultModel
-│   ├── providers/              # Applications, Settings, Calculator, Actions, Files, AiProvider, DevTools
-│   ├── lua/                    # LuaEngine, LuaPluginManager, LuaApi, LuaPermissions
-│   ├── services/               # ConfigService, AiService, MarkdownRenderer, Theme, Process, History
-│   └── dbus/                   # D-Bus org.mvspotlight.Launcher & legacy org.example.Spotlight adaptors
-├── qml/                        # Qt Quick QML components
-│   ├── Main.qml                # Spotlight frameless floating window & animations
-│   ├── PreferencesWindow.qml   # Preferences & customization window
+│   ├── providers/              # Search providers (Apps, Settings, Calc, Actions, Files, AI)
+│   ├── lua/                    # LuaEngine, LuaPluginManager, LuaApi, Sandbox Permissions
+│   ├── services/               # ConfigService, AiService, MarkdownRenderer, Theme, Process
+│   └── dbus/                   # D-Bus IPC interface (org.mvspotlight.Launcher)
+├── qml/                        # Qt Quick / QML User Interface
+│   ├── Main.qml                # Spotlight floating window & fluid spring animations
+│   ├── PreferencesWindow.qml   # Libadwaita Preferences Window with Live Preview
 │   └── components/             # SearchBar, ResultList, ResultItem, AiResponseView, Adw Controls
-├── plugins/examples/           # Example Lua plugins (Weather, Currency, DevTools, Docker, Git, Web, UUID, Time)
-├── assets/                     # Application SVG icons and resources
-├── data/                       # .desktop and systemd service files
-├── scripts/                    # Shortcut setup, install, and uninstall scripts
-├── tests/                      # QtTest automated unit test suite
-└── docs/                       # Technical documentation and guides
+├── plugins/examples/           # Bundled Lua plugins (Weather, Currency, Docker, Git, etc.)
+├── packaging/                  # RPM Spec (.spec), Debian control, rules, and scripts
+├── .github/workflows/          # GitHub Actions CI/CD (Multi-distro build & release automation)
+└── assets/screenshots/         # High-DPI showcase preview assets
 ```
 
 ---
 
-## License
+## 📄 License
 
-MIT License. Designed with care for the modern Linux & GNOME desktop.
+Distributed under the **MIT License**. Crafted with precision for the modern Linux & GNOME desktop.

@@ -38,6 +38,15 @@ public:
     Q_INVOKABLE void testConnection(const QString &provider, const QString &apiKey,
                                    const QString &model, const QString &endpoint);
     Q_INVOKABLE void cancelCurrentRequest();
+    void setMockResponse(const QString &prompt, const QString &response) {
+        m_currentPrompt = prompt;
+        m_lastResponse = response;
+        m_lastError.clear();
+        m_isRequesting = false;
+        emit currentPromptChanged();
+        emit lastResponseChanged();
+        emit isRequestingChanged();
+    }
     Q_INVOKABLE QString renderMarkdown(const QString &markdown, bool isDark = true, const QString &accentColor = "#8A2BE2") const;
 
 signals:
