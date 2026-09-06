@@ -18,6 +18,7 @@ ThemeService::ThemeService(QObject *parent)
     checkGnomeTheme();
     setupGnomeListener();
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
     // Listen to Qt Style hints
     if (QGuiApplication::styleHints()) {
         connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged,
@@ -28,6 +29,7 @@ ThemeService::ThemeService(QObject *parent)
             }
         });
     }
+#endif
 
     // Connect to ConfigService appearance updates
     ConfigService &cfg = ConfigService::instance();
@@ -54,6 +56,7 @@ void ThemeService::setupGnomeListener()
 
 void ThemeService::checkGnomeTheme()
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
     // First check Qt styleHints if available
     if (QGuiApplication::styleHints()) {
         Qt::ColorScheme scheme = QGuiApplication::styleHints()->colorScheme();
@@ -71,6 +74,7 @@ void ThemeService::checkGnomeTheme()
             return;
         }
     }
+#endif
 
     // Direct check via gsettings
     QProcess proc;
