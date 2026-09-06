@@ -53,7 +53,7 @@ fi
 
 %files
 %license LICENSE
-%doc README.md
+%doc README.md CHANGELOG.md
 %{_bindir}/mvspotlight
 %{_datadir}/applications/*.desktop
 %{_sysconfdir}/xdg/autostart/mvspotlight.desktop

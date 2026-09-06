@@ -110,7 +110,7 @@ install(FILES data/autostart/mvspotlight.desktop DESTINATION ${CMAKE_INSTALL_SYS
 install(FILES assets/icons/mvspotlight.svg assets/icons/spotlight-qt.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
 install(DIRECTORY plugins/examples/ DESTINATION ${CMAKE_INSTALL_DATADIR}/mvspotlight/plugins)
 install(FILES data/systemd/mvspotlight.service DESTINATION lib/systemd/user)
-install(FILES LICENSE README.md DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mvspotlight)
+install(FILES LICENSE README.md CHANGELOG.md DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mvspotlight)
 
 # Testing
 enable_testing()

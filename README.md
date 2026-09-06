@@ -198,6 +198,7 @@ cmake --build build --target mvspotlight_capture -j$(nproc)
 ```
 MVSpotlight
 ├── CMakeLists.txt              # CMake build configuration & CPack definitions (RPM, DEB, TGZ)
+├── CHANGELOG.md                # Project release history & Keep a Changelog documentation
 ├── 3rdparty/lua-5.4.8/         # Embedded Lua 5.4 runtime (static zero-dependency build)
 ├── src/
 │   ├── main.cpp                # App entrypoint, CLI arguments parser & Wayland window coordinator
