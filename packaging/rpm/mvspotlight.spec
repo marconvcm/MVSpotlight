@@ -57,7 +57,7 @@ fi
 %{_bindir}/mvspotlight
 %{_datadir}/applications/*.desktop
 %{_sysconfdir}/xdg/autostart/mvspotlight.desktop
-%{_datadir}/icons/hicolor/scalable/apps/mvspotlight.svg
+%{_datadir}/icons/hicolor/scalable/apps/*.svg
 %{_datadir}/mvspotlight/
 %{_prefix}/lib/systemd/user/mvspotlight.service
 

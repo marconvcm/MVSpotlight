@@ -1,0 +1,8 @@
+mvspotlight (1.0.0-1) unstable; urgency=medium
+
+  * Initial release for Debian and Ubuntu.
+  * Added AI Assistant with multi-LLM support (Gemini, OpenAI, Claude, Ollama).
+  * Frameless Wayland-native window with GNOME 50 HIG styling.
+  * Embedded Lua 5.4 plugin runtime and 8 bundled plugins.
+
+ -- Marcos Vinicius <marconvcm@gmail.com>  Sun, 06 Sep 2026 10:55:00 +0800

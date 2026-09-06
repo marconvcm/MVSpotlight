@@ -232,4 +232,17 @@ set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
 set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/packaging/rpm/post_install.sh")
 set(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/packaging/rpm/post_uninstall.sh")
 
+# Debian Generator Settings
+set(CPACK_DEBIAN_PACKAGE_NAME "mvspotlight")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Marcos Vinicius <marconvcm@gmail.com>")
+set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/marconvcm/MVSpotlight")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt6core6, libqt6gui6, libqt6qml6, libqt6quick6, libqt6quickcontrols2-6, libqt6svg6, libqt6dbus6, qml6-module-qtquick, qml6-module-qtquick-controls2, qml6-module-qtquick-layouts, hicolor-icon-theme")
+set(CPACK_DEBIAN_PACKAGE_SUGGESTS "gh")
+set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
+    "${CMAKE_CURRENT_SOURCE_DIR}/packaging/debian/postinst;${CMAKE_CURRENT_SOURCE_DIR}/packaging/debian/postrm"
+)
+
 include(CPack)
+

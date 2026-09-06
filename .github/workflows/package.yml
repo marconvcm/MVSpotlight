@@ -1,0 +1,81 @@
+name: Package & Release (RPM & DEB)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-fedora-rpm:
+    name: Build Fedora RPM
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:41
+    steps:
+      - name: Install dependencies
+        run: |
+          dnf install -y git cmake gcc-c++ rpm-build \
+            qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtsvg-devel
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and Package RPM
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j$(nproc)
+          ctest --test-dir build --output-on-failure
+          cpack --config build/CPackConfig.cmake -G RPM
+
+      - name: Upload RPM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fedora-rpm
+          path: build/*.rpm
+
+  build-debian-deb:
+    name: Build Debian/Ubuntu DEB
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential debhelper devscripts \
+            qt6-base-dev qt6-declarative-dev libqt6svg6-dev
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and Package DEB
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j$(nproc)
+          ctest --test-dir build --output-on-failure
+          cpack --config build/CPackConfig.cmake -G DEB
+
+      - name: Upload DEB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: debian-deb
+          path: build/*.deb
+
+  release:
+    name: Publish GitHub Release
+    needs: [build-fedora-rpm, build-debian-deb]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            fedora-rpm/*.rpm
+            debian-deb/*.deb
+          generate_release_notes: true
